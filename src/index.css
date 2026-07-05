@@ -1,17 +1,32 @@
+@import '@fontsource-variable/orbitron';
+@import '@fontsource-variable/space-grotesk';
+
 *,
 *::before,
 *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* no default focus ring on tap/click — visible ring only for keyboard nav */
+:focus {
+  outline: none;
+}
+:focus-visible {
+  outline: 1px solid rgba(155, 231, 255, 0.55);
+  outline-offset: 4px;
 }
 
 :root {
   --bg: #050508;
   --text: #e8e6f0;
+  --font-display: 'Orbitron Variable', sans-serif;
+  --font-ui: 'Space Grotesk Variable', system-ui, sans-serif;
 
   color-scheme: dark;
-  font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--font-ui);
   color: var(--text);
   background: var(--bg);
   -webkit-font-smoothing: antialiased;
@@ -31,8 +46,153 @@ body,
 body {
   background: var(--bg);
   user-select: none;
+  touch-action: manipulation;
 }
 
 canvas {
   display: block;
+}
+
+/* loader counter: slow breathing glow */
+.warp-num {
+  animation: num-breathe 2.4s ease-in-out infinite;
+}
+@keyframes num-breathe {
+  0%, 100% {
+    text-shadow: 0 0 16px rgba(120, 190, 255, 0.45);
+  }
+  50% {
+    text-shadow: 0 0 34px rgba(150, 210, 255, 0.95);
+  }
+}
+
+/* loader HUD: slow orbit of the tick ring */
+.hud-spin {
+  animation: hud-spin 14s linear infinite;
+}
+@keyframes hud-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* nebula and halo are static layers: only the pointer parallax moves them
+   (compositor-only) — continuous animation of vmax-sized layers janks weak GPUs */
+
+/* planets swell slightly when you aim at them */
+.planet-sphere {
+  transition: transform 0.35s ease;
+}
+button:hover > .planet-float > .planet-sphere {
+  transform: scale(1.09);
+}
+
+/* a small moon on a slow orbit */
+.moon-orbit {
+  animation: moon-orbit 14s linear infinite;
+}
+@keyframes moon-orbit {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* celestial bodies bob gently in place */
+.planet-float {
+  animation: planet-float 9s ease-in-out infinite alternate;
+}
+@keyframes planet-float {
+  from {
+    transform: translateY(-6px);
+  }
+  to {
+    transform: translateY(8px);
+  }
+}
+
+/* docked panels scroll inside themselves with a hairline scrollbar;
+   stable gutter so the bar can never shift the layout when it appears */
+.panel-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(155, 231, 255, 0.25) transparent;
+  scrollbar-gutter: stable;
+  overscroll-behavior: contain;
+}
+.panel-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+.panel-scroll::-webkit-scrollbar-thumb {
+  background: rgba(155, 231, 255, 0.25);
+  border-radius: 4px;
+}
+.panel-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* planet labels brighten with their planet */
+.planet-label {
+  color: rgba(207, 234, 255, 0.6);
+  transition: color 0.3s ease, text-shadow 0.3s ease;
+}
+button:hover .planet-label {
+  color: #eaf6ff;
+  text-shadow: 0 0 10px rgba(150, 210, 255, 0.55);
+}
+
+/* gentle pulse on the destination hint (opacity = compositor-only) */
+.dest-hint {
+  animation: dest-hint 2.6s ease-in-out infinite;
+}
+@keyframes dest-hint {
+  0%, 100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 0.95;
+  }
+}
+
+/* the traveler sky fades in softly; your own star breathes */
+.traveler-sky {
+  animation: sky-in 1.6s ease-out;
+}
+@keyframes sky-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.my-star {
+  animation: my-star 3s ease-in-out infinite;
+}
+@keyframes my-star {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.5);
+    opacity: 1;
+  }
+}
+
+/* nav links ignite on hover */
+.navlink {
+  color: rgba(207, 234, 255, 0.65);
+  transition: color 0.3s ease, text-shadow 0.3s ease;
+}
+.navlink:hover {
+  color: #eaf6ff;
+  text-shadow: 0 0 12px rgba(150, 210, 255, 0.6);
+}
+
+@keyframes neb-drift {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(7vmax, -5vmax, 0) scale(1.18);
+  }
 }

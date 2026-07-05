@@ -10,8 +10,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@fontsource-variable/orbitron": "^5.2.8",
+    "@fontsource-variable/space-grotesk": "^5.2.10",
+    "@fontsource-variable/unbounded": "^5.2.8",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.6.1",
+    "firebase": "^12.15.0",
     "gsap": "^3.15.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
