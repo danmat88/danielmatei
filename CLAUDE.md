@@ -12,15 +12,33 @@ planned (Expo, shared monorepo eventually).
 - **Logo = particle portrait**: Daniel's face built from tiny dots sampled
   from a photo. Needs a high-contrast, front-facing photo from Daniel — ask
   if missing. Current placeholder: dot-matrix "DM" monogram (Logo.tsx).
-- **The name IS the loader** (approved July 2026): "Daniel Matei" sits as a
-  ghost outline from frame one; a torch of light writes it left→right with
-  progress (% rides the torch), while a 3D starfield ramps from calm drift
-  into warp streaks on the same value. At 100% the name blooms, stars
-  decelerate, chrome materializes around it. The name never moves or
-  unmounts — loader and hero are one element, zero transition discontinuity.
-- **HARD performance rules** (user's machine froze twice): no fullscreen
-  WebGL shaders, no fullscreen blur/filter animations. 2D-canvas particles +
-  transforms/opacity/clip-path/text-shadow only.
+- **Loader = stardust assembly** (approved July 2026, survived 12 scrapped
+  concepts): invisible motes get recruited by gravity wave after wave and
+  land on the exact pixels of the real rendered h1 (offscreen raster, CSS
+  half-leading baseline math for sub-pixel alignment). Starfield ramps into
+  warp on the same progress value; crossfade to solid text; camera shudder.
+  Express ride (~1.6s) for returning visitors (sessionStorage), full skip
+  for prefers-reduced-motion.
+- **Navigation = travel** (UniverseMap.tsx): planets Work/Lab/Contact float
+  in space; click (or keys 1/2/3) → fly → the planet's curved horizon rises
+  with holographic content modules; direct hops between surfaces; Escape
+  returns to orbit; the hero layer (`[data-hero]`) fades out while away.
+- **Living Sky** (sky.ts + TravelerSky.tsx + Firestore project
+  danielmatei-464d8): every visitor permanently ignites a gold star. One
+  counter doc (`sky/counter`), positions derived from each traveler's
+  ordinal — O(1) reads. Rules only allow +1 increments. `?sky=N` URL param
+  previews any population without touching the counter.
+- **Editable content** lives in `src/universe.ts` (captain's log entries,
+  mission-control status line).
+- **HARD performance rules** (user's machine freezes easily — violated 4x,
+  each time reported as freezing): no fullscreen WebGL shaders, no
+  fullscreen blur/filter animations, no per-frame DOM paints (no animated
+  text-shadow / background-position), no giant (vmax-sized) animated
+  gradient layers — nebula is ONE static quarter-res canvas. Canvas motion
+  uses pre-rendered sprites + drawImage + globalAlpha (zero per-frame string
+  allocations), DPR capped at 1.5, rAF loops must self-terminate when their
+  job is done. GSAP must be the only transformer of an element during its
+  tween (pause CSS animations/transitions on those elements first).
 - **Iterate ONLY with screenshots**: scratchpad `allshots.mjs` pattern
   (playwright-core + Chrome at `C:\Program Files\Google\Chrome\Application\chrome.exe`),
   capture desktop + mobile across the whole sequence. Multiple visual bugs
@@ -28,7 +46,9 @@ planned (Expo, shared monorepo eventually).
   breaks on transformed children — gradient must be per-animated-element).
 - **Scrapped by user** (do not resurrect): lightning-writes-name, WebGL
   nebula / black-hole loader, circular ring+counter HUD, flat white flash
-  transitions, DOM shockwave circles.
+  transitions, DOM shockwave circles, vertical/3D-posed name, stacked-layer
+  text extrusion, constellation letter-drawing, genesis point-of-light,
+  waveform transmission, dashed orbit rings, torch-writes-name.
 
 ## Stack
 
