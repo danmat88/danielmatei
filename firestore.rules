@@ -1,0 +1,16 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // The Living Sky: one public counter. Anyone may read it; writes may
+    // only ever increment it by exactly 1 — nothing else in the database
+    // is reachable.
+    match /sky/counter {
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasOnly(['n'])
+                    && request.resource.data.n == 1;
+      allow update: if request.resource.data.keys().hasOnly(['n'])
+                    && request.resource.data.n == resource.data.n + 1;
+      allow delete: if false;
+    }
+  }
+}

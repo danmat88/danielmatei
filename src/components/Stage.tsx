@@ -54,8 +54,15 @@ export default function Stage() {
   const clockRef = useRef<HTMLSpanElement>(null)
   const [sky, setSky] = useState<SkyState | null>(null)
 
-  // the Living Sky: this visit ignites a permanent star
+  // the Living Sky: this visit ignites a permanent star.
+  // Testing aid: ?sky=500 previews the sky at any population without
+  // touching the real counter.
   useEffect(() => {
+    const simulated = Number(new URLSearchParams(window.location.search).get('sky'))
+    if (simulated > 0) {
+      setSky({ count: simulated, myIndex: Math.max(1, Math.floor(simulated * 0.37)) })
+      return
+    }
     joinSky().then(setSky).catch(() => { /* sky stays quiet if backend fails */ })
   }, [])
 
@@ -290,7 +297,9 @@ export default function Stage() {
                 <>
                   <span aria-hidden>·</span>
                   <span style={{ color: 'rgba(255,216,150,0.55)' }}>
-                    universe populated by {sky.count} traveler{sky.count === 1 ? '' : 's'} — one star is yours
+                    {sky.count < 50
+                      ? `you are traveler #${sky.myIndex} — your star is up there`
+                      : `universe populated by ${sky.count} travelers — one star is yours`}
                   </span>
                 </>
               )}
