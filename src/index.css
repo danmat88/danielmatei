@@ -167,6 +167,21 @@ button:hover .planet-label {
 .my-star {
   animation: my-star 3s ease-in-out infinite;
 }
+
+/* the Observatory pointing at your star */
+.spot-ring {
+  animation: spot-ring 1.3s ease-out 3;
+}
+@keyframes spot-ring {
+  from {
+    transform: scale(0.3);
+    opacity: 1;
+  }
+  to {
+    transform: scale(3.2);
+    opacity: 0;
+  }
+}
 @keyframes my-star {
   0%, 100% {
     transform: scale(1);

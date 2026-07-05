@@ -72,8 +72,10 @@ export default function Starfield({ scene }: { scene: SceneState }) {
       mouse.x += (mouse.tx - mouse.x) * 0.03
       mouse.y += (mouse.ty - mouse.y) * 0.03
 
-      // idle drift → cubic ramp while charging → released by the burst
+      // idle drift → cubic ramp while charging → released by the burst;
+      // plus the visitor's own hand on the throttle (helm mode)
       const speed = 0.04 + Math.pow(scene.progress, 3) * 2.4 * (1 - scene.burst)
+        + scene.boost * 2.2
 
       ctx.clearRect(0, 0, w, h)
       ctx.globalCompositeOperation = 'lighter'

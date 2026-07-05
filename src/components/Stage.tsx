@@ -17,6 +17,12 @@ const SCRAMBLE = '!<>-_/[]{}=+*^?#'
 const phaseLabel = (pct: number) =>
   pct < 38 ? 'gathering stardust' : pct < 76 ? 'binding light' : 'forming the name'
 
+// decided ONCE per page load, at module scope — inside the effect,
+// StrictMode's double-mount would read the flag its own first run just wrote
+// and mark every first-time visitor as returning
+const RETURNING = sessionStorage.getItem('dm-visited') === '1'
+sessionStorage.setItem('dm-visited', '1')
+
 const nameFont: React.CSSProperties = {
   fontFamily: 'var(--font-display)',
   fontSize: 'clamp(26px, 5vw, 76px)',
@@ -45,7 +51,7 @@ export default function Stage() {
   const pctRef = useRef<HTMLSpanElement>(null)
   const lineRef = useRef<HTMLDivElement>(null)
   const statusRef = useRef<HTMLDivElement>(null)
-  const sceneRef = useRef<SceneState>({ progress: 0, burst: 0, flare: 0, memory: 0 })
+  const sceneRef = useRef<SceneState>({ progress: 0, burst: 0, flare: 0, memory: 0, boost: 0 })
   const scene = sceneRef.current
   const lastLabel = useRef('')
   const scrambleTimer = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -174,12 +180,9 @@ export default function Stage() {
     }
 
     // full show on the first visit; returning visitors get the express ride
-    const returning = sessionStorage.getItem('dm-visited') === '1'
-    sessionStorage.setItem('dm-visited', '1')
-
     const charge = gsap.to(scene, {
       progress: 0.92,
-      duration: returning ? 1.6 : 4.8,
+      duration: RETURNING ? 1.6 : 4.8,
       ease: 'power1.inOut',
       onUpdate: update,
       onComplete() {
@@ -282,26 +285,21 @@ export default function Stage() {
             visibility: phase === 'main' ? 'visible' : 'hidden',
           }}>
             <span data-fade style={{
-              display: 'flex', alignItems: 'baseline', gap: 14, flexWrap: 'wrap',
-              justifyContent: 'center',
-              fontSize: 12, letterSpacing: '0.18em', color: 'rgba(207,234,255,0.3)',
+              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+              fontSize: 10, letterSpacing: '0.14em', color: 'rgba(207,234,255,0.3)',
+              textAlign: 'center', lineHeight: 1.5,
             }}>
-              <span>danielmatei.ro</span>
-              <span aria-hidden>·</span>
               <span>
-                mission control, bucurești{' '}
+                danielmatei.ro · mission control, bucurești{' '}
                 <span ref={clockRef} style={{ fontVariantNumeric: 'tabular-nums', color: 'rgba(207,234,255,0.5)' }} />
                 {' — '}{STATUS}
               </span>
               {sky && (
-                <>
-                  <span aria-hidden>·</span>
-                  <span style={{ color: 'rgba(255,216,150,0.55)' }}>
-                    {sky.count < 50
-                      ? `you are traveler #${sky.myIndex} — your star is up there`
-                      : `universe populated by ${sky.count} travelers — one star is yours`}
-                  </span>
-                </>
+                <span style={{ color: 'rgba(255,216,150,0.5)' }}>
+                  {sky.count < 50
+                    ? `you are traveler #${sky.myIndex} — your star is up there`
+                    : `universe populated by ${sky.count} travelers — one star is yours`}
+                </span>
               )}
             </span>
           </footer>
@@ -310,7 +308,7 @@ export default function Stage() {
         {/* the nav is the universe: planets you fly to. Lives OUTSIDE the
             data-hero layer — the hero fades when departing, the planets and
             the planet surface must not */}
-        {phase === 'main' && <UniverseMap />}
+        {phase === 'main' && <UniverseMap scene={scene} sky={sky} />}
 
         <CursorGlow />
 

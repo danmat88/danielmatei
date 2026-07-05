@@ -25,6 +25,22 @@ const starPos = (i: number) => {
 export default function TravelerSky({ count, myIndex }: { count: number; myIndex: number }) {
   const ref = useRef<HTMLCanvasElement>(null)
   const [minePos, setMinePos] = useState<{ x: number; y: number } | null>(null)
+  const [spotting, setSpotting] = useState(false)
+
+  // the Observatory can ask the sky to point out the visitor's star
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | null = null
+    const onSpot = () => {
+      setSpotting(true)
+      if (timer) clearTimeout(timer)
+      timer = setTimeout(() => setSpotting(false), 4000)
+    }
+    window.addEventListener('spot-my-star', onSpot)
+    return () => {
+      window.removeEventListener('spot-my-star', onSpot)
+      if (timer) clearTimeout(timer)
+    }
+  }, [])
 
   useEffect(() => {
     const cv = ref.current!
@@ -59,12 +75,22 @@ export default function TravelerSky({ count, myIndex }: { count: number; myIndex
       }} />
       {minePos && (
         <span className="my-star" title="your star" style={{
-          position: 'fixed', zIndex: 0,
+          position: 'fixed', zIndex: spotting ? 8 : 0,
           left: `calc(${(minePos.x * 100).toFixed(2)}% - 3px)`,
           top: `calc(${(minePos.y * 100).toFixed(2)}% - 3px)`,
           width: 6, height: 6, borderRadius: '50%',
           background: '#ffe2ae',
           boxShadow: '0 0 10px rgba(255,216,150,0.9)',
+        }} />
+      )}
+      {minePos && spotting && (
+        <span className="spot-ring" aria-hidden style={{
+          position: 'fixed', zIndex: 8,
+          left: `calc(${(minePos.x * 100).toFixed(2)}% - 30px)`,
+          top: `calc(${(minePos.y * 100).toFixed(2)}% - 30px)`,
+          width: 60, height: 60, borderRadius: '50%',
+          border: '1.5px solid rgba(255,216,150,0.9)',
+          pointerEvents: 'none',
         }} />
       )}
     </>
