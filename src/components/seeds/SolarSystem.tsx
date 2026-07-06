@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 import { OrbitControls, Stars, Html, Line } from '@react-three/drei'
 import * as THREE from 'three'
@@ -197,19 +197,23 @@ function Moon({ parent, warp }: { parent: number; warp: number }) {
   )
 }
 
+type Focus = { active: boolean; dist: number; flying: number; pos: THREE.Vector3 }
+
 function Planet({
-  p, warp, selected, hovered, setHovered, onSelect,
+  p, warp, selected, hovered, setHovered, onSelect, focus,
 }: {
-  p: P; warp: number; selected: boolean; hovered: boolean; setHovered: (n: string | null) => void; onSelect: (p: P) => void
+  p: P; warp: number; selected: boolean; hovered: boolean; setHovered: (n: string | null) => void; onSelect: (p: P) => void; focus: React.MutableRefObject<Focus>
 }) {
   const orbitGrp = useRef<THREE.Group>(null!)
   const spin = useRef<THREE.Group>(null!)
+  const meshRef = useRef<THREE.Mesh>(null!)
   const tex = useMemo(() => TEX[p.name](), [p.name])
   const start = useMemo(() => Math.random() * Math.PI * 2, [])
   useFrame((_, dt) => {
     const omega = ((2 * Math.PI) / EARTH_SECONDS) * (1 / p.period) * warp
     if (orbitGrp.current) orbitGrp.current.rotation.y += omega * dt
     if (spin.current) spin.current.rotation.y += dt * 0.35
+    if (selected && meshRef.current) meshRef.current.getWorldPosition(focus.current.pos)
   })
   const lit = hovered || selected
   return (
@@ -219,6 +223,7 @@ function Planet({
         <group rotation={[0, 0, p.tilt]}>
           <group ref={spin}>
             <mesh
+              ref={meshRef}
               onPointerOver={e => { e.stopPropagation(); setHovered(p.name); document.body.style.cursor = 'pointer' }}
               onPointerOut={() => { setHovered(null); document.body.style.cursor = 'auto' }}
               onClick={e => { e.stopPropagation(); onSelect(p) }}
@@ -261,12 +266,111 @@ function Planet({
   )
 }
 
+/* a rocky asteroid belt between Mars and Jupiter (one instanced draw call) */
+function AsteroidBelt({ warp }: { warp: number }) {
+  const grp = useRef<THREE.Group>(null!)
+  const inst = useRef<THREE.InstancedMesh>(null!)
+  const N = 460
+  useLayoutEffect(() => {
+    const d = new THREE.Object3D()
+    for (let i = 0; i < N; i++) {
+      const a = Math.random() * Math.PI * 2
+      const r = 16.4 + Math.random() * 2.7
+      d.position.set(Math.cos(a) * r, (Math.random() - 0.5) * 0.9, Math.sin(a) * r)
+      d.rotation.set(Math.random() * 6, Math.random() * 6, Math.random() * 6)
+      d.scale.setScalar(0.4 + Math.random() * 1.3)
+      d.updateMatrix()
+      inst.current.setMatrixAt(i, d.matrix)
+    }
+    inst.current.instanceMatrix.needsUpdate = true
+  }, [])
+  useFrame((_, dt) => {
+    if (grp.current) grp.current.rotation.y += dt * warp * (1 / 4.6) * ((2 * Math.PI) / EARTH_SECONDS)
+  })
+  return (
+    <group ref={grp}>
+      <instancedMesh ref={inst} args={[undefined, undefined, N]}>
+        <dodecahedronGeometry args={[0.1, 0]} />
+        <meshStandardMaterial color="#8a7f70" roughness={1} flatShading />
+      </instancedMesh>
+    </group>
+  )
+}
+
+/* an icy comet on an inclined elliptical orbit, tail always facing away from the sun */
+function Comet({ warp }: { warp: number }) {
+  const holder = useRef<THREE.Group>(null!)
+  const tail = useRef<THREE.Mesh>(null!)
+  const t = useRef(Math.random() * Math.PI * 2)
+  const up = useMemo(() => new THREE.Vector3(0, 1, 0), [])
+  const dir = useMemo(() => new THREE.Vector3(), [])
+  useFrame((_, dt) => {
+    t.current += dt * warp * 0.22 * ((2 * Math.PI) / EARTH_SECONDS)
+    const x = Math.cos(t.current) * 34 - 10
+    const z = Math.sin(t.current) * 15
+    const y = Math.sin(t.current * 1.0) * 6
+    holder.current.position.set(x, y, z)
+    dir.copy(holder.current.position).normalize() // away from sun
+    if (tail.current) {
+      tail.current.quaternion.setFromUnitVectors(up, dir)
+      tail.current.position.copy(dir).multiplyScalar(2.4)
+    }
+  })
+  return (
+    <group ref={holder}>
+      <mesh>
+        <sphereGeometry args={[0.28, 16, 16]} />
+        <meshStandardMaterial color="#cfe9ff" emissive="#8fd0ff" emissiveIntensity={0.6} roughness={0.6} />
+      </mesh>
+      <mesh ref={tail}>
+        <coneGeometry args={[0.55, 5, 16, 1, true]} />
+        <meshBasicMaterial color="#bfe6ff" transparent opacity={0.28} side={THREE.DoubleSide} blending={THREE.AdditiveBlending} depthWrite={false} />
+      </mesh>
+    </group>
+  )
+}
+
+/* fly-to + follow: click a planet, the camera glides in and tracks it */
+// drei forwards the three-stdlib OrbitControls instance; we only read target/update
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type ControlsRef = React.MutableRefObject<any>
+
+function CameraRig({ focus, controls }: { focus: React.MutableRefObject<Focus>; controls: ControlsRef }) {
+  const origin = useMemo(() => new THREE.Vector3(), [])
+  const dir = useMemo(() => new THREE.Vector3(), [])
+  useFrame(({ camera }) => {
+    const c = controls.current
+    if (!c) return
+    const f = focus.current
+    c.target.lerp(f.active ? f.pos : origin, 0.09)
+    if (performance.now() < f.flying) {
+      dir.copy(camera.position).sub(c.target)
+      const d = dir.length()
+      if (d > 0.001) {
+        dir.divideScalar(d)
+        camera.position.copy(c.target).addScaledVector(dir, THREE.MathUtils.lerp(d, f.dist, 0.06))
+      }
+    }
+    c.update()
+  })
+  return null
+}
+
 export default function SolarSystem() {
   const [warp, setWarp] = useState(1)
   const [paused, setPaused] = useState(false)
   const [sel, setSel] = useState<P | null>(null)
   const [hovered, setHovered] = useState<string | null>(null)
   const w = paused ? 0 : warp
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const controls = useRef<any>(null)
+  const focus = useRef<Focus>({ active: false, dist: 52, flying: 0, pos: new THREE.Vector3() })
+
+  useEffect(() => {
+    focus.current.active = !!sel
+    focus.current.dist = sel ? THREE.MathUtils.clamp(sel.size * 5 + 6, 9, 42) : 52
+    focus.current.flying = performance.now() + 1500
+  }, [sel])
 
   return (
     <div className="solar">
@@ -275,6 +379,8 @@ export default function SolarSystem() {
         <ambientLight intensity={0.13} />
         <Stars radius={240} depth={80} count={2600} factor={4} saturation={0} fade speed={0} />
         <Sun />
+        <AsteroidBelt warp={w} />
+        <Comet warp={w} />
         {PLANETS.map(p => (
           <OrbitRing key={p.name} radius={p.orbit} color={p.color} bright={hovered === p.name || sel?.name === p.name} />
         ))}
@@ -287,9 +393,11 @@ export default function SolarSystem() {
             hovered={hovered === p.name}
             setHovered={setHovered}
             onSelect={setSel}
+            focus={focus}
           />
         ))}
-        <OrbitControls enablePan={false} enableDamping dampingFactor={0.08} minDistance={9} maxDistance={140} maxPolarAngle={Math.PI * 0.88} />
+        <OrbitControls ref={controls} enablePan={false} enableDamping dampingFactor={0.08} minDistance={9} maxDistance={140} maxPolarAngle={Math.PI * 0.88} />
+        <CameraRig focus={focus} controls={controls} />
       </Canvas>
 
       <div className="solar-hud">
