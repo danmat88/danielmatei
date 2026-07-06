@@ -47,15 +47,16 @@ export function schedule(order: Order): { current: number; stages: StageView[] }
   const total = days * 86_400_000
   const frac = [0, 0.1, 0.35, 0.8, 1]
   const now = Date.now()
+  const created = Number.isFinite(order.createdAt) ? order.createdAt : now
   const realIdx = Math.max(0, PIPELINE.findIndex(p => p.id === order.status))
   let projIdx = 0
-  for (let i = 0; i < PIPELINE.length; i++) if (now >= order.createdAt + frac[i] * total) projIdx = i
+  for (let i = 0; i < PIPELINE.length; i++) if (now >= created + frac[i] * total) projIdx = i
   projIdx = Math.min(projIdx, PIPELINE.length - 2) // final delivery is confirmed, never projected
   const current = Math.max(realIdx, projIdx)
   const stages: StageView[] = PIPELINE.map((p, i) => ({
     id: p.id,
     label: p.label,
-    at: order.createdAt + frac[i] * total,
+    at: created + frac[i] * total,
     state: i < current ? 'done' : i === current ? 'now' : 'todo',
   }))
   return { current, stages }
@@ -132,11 +133,16 @@ export async function refreshOrder(code: string): Promise<Order | null> {
     const { doc, getDoc } = await import('firebase/firestore')
     const snap = await getDoc(doc(await db(), 'orders', code))
     if (snap.exists()) {
-      const data = snap.data() as Partial<Order>
+      const data = snap.data() as Record<string, unknown>
+      // Firestore returns createdAt as a Timestamp — normalise back to millis
+      const ts = data.createdAt as { toMillis?: () => number } | undefined
+      const createdAt =
+        ts && typeof ts.toMillis === 'function' ? ts.toMillis() : local?.createdAt ?? Date.now()
       const merged: Order = {
         ...(local as Order),
-        ...data,
+        ...(data as Partial<Order>),
         code,
+        createdAt,
         status: (data.status as OrderStatus) ?? local?.status ?? 'received',
         synced: true,
       }

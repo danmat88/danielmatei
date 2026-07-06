@@ -1813,8 +1813,23 @@ canvas {
     overflow-y: auto;
     scrollbar-gutter: stable;
   }
+  /* the section nav drops to its own full-width row — never hidden */
+  .bar {
+    height: auto;
+    flex-wrap: wrap;
+    padding-top: 8px;
+    padding-bottom: 8px;
+    row-gap: 8px;
+  }
   .bar-nav {
-    display: none;
+    order: 3;
+    width: 100%;
+    margin: 0;
+    justify-content: center;
+    gap: 6px;
+  }
+  .bar-right {
+    margin-left: auto;
   }
   .console {
     min-height: 44dvh;
@@ -1823,6 +1838,14 @@ canvas {
 @media (max-width: 640px) {
   .bar-mail {
     display: none;
+  }
+  .bar-badge {
+    display: none;
+  }
+  .bar-nav .bar-tab {
+    padding: 5px 10px;
+    letter-spacing: 0.1em;
+    font-size: 0.58rem;
   }
   .bar-mark {
     font-size: 1rem;

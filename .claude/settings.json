@@ -36,7 +36,9 @@
       "Bash(URL=\"http://localhost:5173/\" node scratchpad_shots.mjs)",
       "Bash(node scratchpad_sections.mjs)",
       "Bash(firebase login:list)",
-      "Bash(firebase firestore:delete orders -r -f --project danielmatei-464d8)"
+      "Bash(firebase firestore:delete orders -r -f --project danielmatei-464d8)",
+      "Bash(node scratchpad_mobile.mjs)",
+      "Bash(firebase functions:list --project danielmatei-464d8)"
     ],
     "additionalDirectories": [
       "C:\\Users\\coste\\.claude\\projects\\c--Users-coste-OneDrive-Desktop-danielmatei\\memory"

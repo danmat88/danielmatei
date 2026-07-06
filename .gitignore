@@ -25,3 +25,8 @@ dist-ssr
 
 # Claude scratchpad (screenshots, capture scripts)
 scratchpad_*
+
+# Cloud Functions build + local artifacts
+functions/lib
+functions/.firebase
+.firebase
