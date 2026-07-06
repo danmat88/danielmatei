@@ -151,18 +151,85 @@ function glowTexture() {
   return new THREE.CanvasTexture(c)
 }
 
+/* fresnel limb glow — a proper atmosphere that brightens at the planet's edge */
+function Atmosphere({ size, color }: { size: number; color: string }) {
+  const mat = useMemo(
+    () =>
+      new THREE.ShaderMaterial({
+        uniforms: { uColor: { value: new THREE.Color(color) } },
+        vertexShader: `varying vec3 vN; varying vec3 vV;
+          void main(){ vec4 mv = modelViewMatrix*vec4(position,1.0); vN = normalize(normalMatrix*normal); vV = normalize(-mv.xyz); gl_Position = projectionMatrix*mv; }`,
+        fragmentShader: `uniform vec3 uColor; varying vec3 vN; varying vec3 vV;
+          void main(){ float f = pow(1.0 - abs(dot(normalize(vN), normalize(vV))), 2.8); gl_FragColor = vec4(uColor, f * 0.9); }`,
+        transparent: true,
+        side: THREE.BackSide,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      }),
+    [color]
+  )
+  return <mesh scale={1.2} material={mat}><sphereGeometry args={[size, 32, 32]} /></mesh>
+}
+
+/* Earth's cloud deck, drifting a touch faster than the surface */
+function Clouds({ size }: { size: number }) {
+  const ref = useRef<THREE.Mesh>(null!)
+  const tex = useMemo(() => makeTex(g => {
+    g.clearRect(0, 0, TW, TH)
+    for (let i = 0; i < 24; i++) blob(g, Math.random() * TW, rnd(TH * 0.12, TH * 0.88), rnd(10, 30), `rgba(255,255,255,${rnd(0.3, 0.6)})`)
+  }), [])
+  useFrame((_, dt) => { if (ref.current) ref.current.rotation.y += dt * 0.5 })
+  return (
+    <mesh ref={ref} scale={1.03}>
+      <sphereGeometry args={[size, 32, 32]} />
+      <meshStandardMaterial map={tex} transparent opacity={0.55} depthWrite={false} roughness={1} />
+    </mesh>
+  )
+}
+
+/* a dim procedural nebula behind the stars — depth + colour, never bright */
+function Nebula() {
+  const tex = useMemo(() => {
+    const c = document.createElement('canvas'); c.width = 1024; c.height = 512
+    const g = c.getContext('2d')!
+    g.fillStyle = '#03040a'; g.fillRect(0, 0, 1024, 512)
+    const cols = ['#1a1140', '#0e2a3a', '#2a1030', '#101a45']
+    for (let i = 0; i < 18; i++) {
+      const x = Math.random() * 1024, y = Math.random() * 512, r = rnd(90, 260)
+      const grd = g.createRadialGradient(x, y, 0, x, y, r)
+      grd.addColorStop(0, cols[i % cols.length] + '55')
+      grd.addColorStop(1, 'transparent')
+      g.fillStyle = grd; g.fillRect(x - r, y - r, r * 2, r * 2)
+    }
+    for (let i = 0; i < 500; i++) { g.fillStyle = `rgba(255,255,255,${rnd(0.1, 0.6)})`; g.fillRect(Math.random() * 1024, Math.random() * 512, rnd(0.5, 1.7), rnd(0.5, 1.7)) }
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace
+    return t
+  }, [])
+  return <mesh scale={320}><sphereGeometry args={[1, 32, 32]} /><meshBasicMaterial map={tex} side={THREE.BackSide} depthWrite={false} /></mesh>
+}
+
 /* ---------- scene pieces ---------- */
 function Sun() {
   const tex = useMemo(sunTexture, [])
   const glow = useMemo(glowTexture, [])
   const ref = useRef<THREE.Mesh>(null!)
-  useFrame((_, dt) => { if (ref.current) ref.current.rotation.y += dt * 0.05 })
+  const corona = useRef<THREE.Sprite>(null!)
+  useFrame(({ clock }, dt) => {
+    if (ref.current) ref.current.rotation.y += dt * 0.05
+    if (corona.current) {
+      const s = 30 + Math.sin(clock.elapsedTime * 0.8) * 1.6
+      corona.current.scale.set(s, s, 1)
+    }
+  })
   return (
     <group>
       <mesh ref={ref}>
         <sphereGeometry args={[4, 48, 48]} />
         <meshBasicMaterial map={tex} />
       </mesh>
+      <sprite ref={corona} scale={[30, 30, 1]}>
+        <spriteMaterial map={glow} blending={THREE.AdditiveBlending} depthWrite={false} transparent opacity={0.22} />
+      </sprite>
       <sprite scale={[17, 17, 1]}>
         <spriteMaterial map={glow} blending={THREE.AdditiveBlending} depthWrite={false} transparent opacity={0.7} />
       </sprite>
@@ -232,12 +299,8 @@ function Planet({
               <meshStandardMaterial map={tex} roughness={0.9} metalness={0.03} emissive="#ffffff" emissiveIntensity={lit ? 0.14 : 0} />
             </mesh>
           </group>
-          {p.atmos && (
-            <mesh scale={1.08}>
-              <sphereGeometry args={[p.size, 24, 24]} />
-              <meshBasicMaterial color={p.atmos} transparent opacity={0.14} side={THREE.BackSide} blending={THREE.AdditiveBlending} depthWrite={false} />
-            </mesh>
-          )}
+          {p.atmos && <Atmosphere size={p.size} color={p.atmos} />}
+          {p.name === 'Earth' && <Clouds size={p.size} />}
           {p.ring && (
             <group rotation={[-Math.PI / 2, 0, 0]}>
               <mesh>
@@ -369,15 +432,16 @@ export default function SolarSystem() {
   useEffect(() => {
     focus.current.active = !!sel
     focus.current.dist = sel ? THREE.MathUtils.clamp(sel.size * 5 + 6, 9, 42) : 52
-    focus.current.flying = performance.now() + 1500
+    focus.current.flying = performance.now() + 2000
   }, [sel])
 
   return (
     <div className="solar">
-      <Canvas dpr={[1, 1.5]} camera={{ position: [0, 26, 52], fov: 45 }} gl={{ antialias: true }}>
+      <Canvas dpr={[1, 1.5]} camera={{ position: [0, 42, 82], fov: 45 }} gl={{ antialias: true }}>
         <color attach="background" args={['#03050a']} />
         <ambientLight intensity={0.13} />
-        <Stars radius={240} depth={80} count={2600} factor={4} saturation={0} fade speed={0} />
+        <Nebula />
+        <Stars radius={240} depth={80} count={1900} factor={4} saturation={0} fade speed={0} />
         <Sun />
         <AsteroidBelt warp={w} />
         <Comet warp={w} />

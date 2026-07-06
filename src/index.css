@@ -2075,6 +2075,14 @@ canvas {
   display: block;
   touch-action: none;
 }
+/* static cinematic vignette (never animated) */
+.solar::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(125% 105% at 50% 45%, transparent 55%, rgba(0, 0, 0, 0.55) 100%);
+}
 .solar-label {
   font-family: var(--font-mono);
   font-size: 0.6rem;
