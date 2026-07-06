@@ -12,5 +12,30 @@ service cloud.firestore {
                     && request.resource.data.n == resource.data.n + 1;
       allow delete: if false;
     }
+
+    // FORGE orders. Anyone may CREATE a well-formed order (contact-form
+    // pattern) and GET one back by its code. Status only ever advances
+    // server-side (Admin SDK / a Cloud Function), never from the client.
+    match /orders/{code} {
+      allow get: if true;
+      allow list: if false;
+      allow create: if request.resource.data.keys().hasOnly(
+                        ['code', 'project', 'features', 'timeline', 'budget',
+                         'email', 'estimate', 'stack', 'status', 'createdAt'])
+                    && request.resource.data.code == code
+                    && request.resource.data.status == 'received'
+                    && request.resource.data.createdAt == request.time
+                    && request.resource.data.project is string
+                    && request.resource.data.project.size() < 80
+                    && request.resource.data.features is string
+                    && request.resource.data.features.size() < 2000
+                    && request.resource.data.email is string
+                    && request.resource.data.email.size() < 200
+                    && request.resource.data.estimate is string
+                    && request.resource.data.estimate.size() < 80
+                    && request.resource.data.stack is list
+                    && request.resource.data.stack.size() < 12;
+      allow update, delete: if false;
+    }
   }
 }

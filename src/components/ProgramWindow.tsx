@@ -4,6 +4,7 @@ import type { Skill } from '../skills'
 import ThreeSeed from './seeds/ThreeSeed'
 import PingSeed from './seeds/PingSeed'
 import ChatSeed from './seeds/ChatSeed'
+import FrontendSeed from './seeds/FrontendSeed'
 
 /**
  * A running program. The window doesn't pop — it GROWS out of the tile
@@ -109,23 +110,45 @@ export default function ProgramWindow({ skill, fromRect, onExit }: Props) {
             ✕
           </button>
         </header>
-        <div className="win-body panel-scroll">
-          <pre className="win-proc" aria-hidden>
-            {intro.slice(0, introN).join('\n')}
-          </pre>
+        <div className="win-body">
+          {!ready && (
+            <pre className="win-proc" aria-hidden>
+              {intro.slice(0, introN).join('\n')}
+            </pre>
+          )}
           <div className={'win-content' + (ready ? ' ready' : '')}>
-            <p className="win-kicker">PROCESS {skill.hotkey} OF 5 · RUNNING</p>
-            <h2 className="win-heading">{skill.label}</h2>
-            {ready && skill.id === 'three' && <ThreeSeed accent={skill.accent} />}
-            {skill.id === 'backend' && <pre className="win-ascii">{skill.preview}</pre>}
-            {skill.id === 'backend' && <PingSeed />}
-            {skill.id === 'ai' && <ChatSeed />}
-            {(skill.id === 'frontend' || skill.id === 'mobile') && (
-              <pre className="win-ascii">{skill.preview}</pre>
-            )}
-            <p className="win-blurb">{skill.blurb}</p>
-            <p className="win-soon">$ status: full exhibit compiling — everything here runs for real, nothing is a badge.</p>
-            <p className="win-hint">ESC OR ✕ KILLS THE PROCESS</p>
+            {/* left: the spec sheet */}
+            <aside className="win-side panel-scroll">
+              <p className="win-kicker">
+                EXHIBIT {skill.hotkey} / 5 <b className="win-live">● LIVE</b>
+              </p>
+              <h2 className="win-heading">{skill.label}</h2>
+              <p className="win-syn">{skill.man.synopsis}</p>
+              <p className="win-h">STACK</p>
+              <p className="win-tech">{skill.man.tech.join(' · ')}</p>
+              <p className="win-h">YOU CAN</p>
+              <ul className="win-play">
+                {skill.man.play.map(p => (
+                  <li key={p}>▸ {p}</li>
+                ))}
+              </ul>
+              <p className="win-blurb">{skill.blurb}</p>
+              <p className="win-esc">ESC or ✕ kills the process</p>
+            </aside>
+
+            {/* right: the live exhibit */}
+            <div className="win-stage">
+              {ready && skill.id === 'three' && <ThreeSeed accent={skill.accent} />}
+              {skill.id === 'backend' && <PingSeed />}
+              {skill.id === 'frontend' && <FrontendSeed />}
+              {skill.id === 'ai' && <ChatSeed />}
+              {skill.id === 'mobile' && (
+                <div className="win-blueprint">
+                  <pre className="win-ascii">{skill.preview}</pre>
+                  <p className="seed-note">blueprint — the phone-as-controller build docks here next.</p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </section>

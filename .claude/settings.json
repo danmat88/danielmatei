@@ -24,7 +24,19 @@
       "Bash(node scratchpad_loader.mjs)",
       "Bash(ls node_modules/@fontsource-variable/)",
       "Bash(ls \"C:\\\\Users\\\\coste\\\\.claude\\\\projects\\\\c--Users-coste-OneDrive-Desktop-danielmatei\\\\memory\")",
-      "Bash(cat \"C:\\\\Users\\\\coste\\\\.claude\\\\projects\\\\c--Users-coste-OneDrive-Desktop-danielmatei\\\\memory\\\\MEMORY.md\")"
+      "Bash(cat \"C:\\\\Users\\\\coste\\\\.claude\\\\projects\\\\c--Users-coste-OneDrive-Desktop-danielmatei\\\\memory\\\\MEMORY.md\")",
+      "Bash(node scratchpad_term.mjs)",
+      "Bash(node scratchpad_exhibit.mjs)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5175/)",
+      "Bash(tail -3 scratchpad_dev.log)",
+      "Bash(node scratchpad_brief.mjs)",
+      "Bash(node scratchpad_cards.mjs)",
+      "Bash(npx oxlint *)",
+      "Bash(node scratchpad_ai.mjs)",
+      "Bash(URL=\"http://localhost:5173/\" node scratchpad_shots.mjs)",
+      "Bash(node scratchpad_sections.mjs)",
+      "Bash(firebase login:list)",
+      "Bash(firebase firestore:delete orders -r -f --project danielmatei-464d8)"
     ],
     "additionalDirectories": [
       "C:\\Users\\coste\\.claude\\projects\\c--Users-coste-OneDrive-Desktop-danielmatei\\memory"

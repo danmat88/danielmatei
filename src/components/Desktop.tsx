@@ -1,6 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { SKILLS, type SkillId } from '../skills'
 import { EMAIL, GITHUB_URL, HIRE, README, WHOAMI, neofetch } from '../os'
+import BriefBuilder from './BriefBuilder'
+import SkillDemo from './SkillDemo'
+import TrackView from './TrackView'
+
+type View = 'showcase' | 'order' | 'track'
 
 /**
  * FORGE — the desktop. Left: a 3D coverflow of the five programs (active in
@@ -15,30 +20,6 @@ type Props = {
 }
 
 const AUTHOR = 'Daniel Matei'
-
-/** Each program idles with a themed process feed — a skill, running live. */
-const FEED: Record<SkillId, string[]> = {
-  three: ['scene: 1 mesh · 512 tris', 'fps 60 · draws 1', 'orbit camera ready', 'gravity 9.8 m/s²', 'time-warp armed'],
-  frontend: ['<App/> mounted', '0 layout shifts', 'paint 60fps', 'a11y audit: pass', 'bundle 142 kB'],
-  backend: ['GET /ping 200 · 138ms', 'GET /ping 200 · 141ms', 'rate 4/s · ok', 'counter +1 → sky', 'firestore uplink ok'],
-  mobile: ['device linked ●', 'tilt 12° · steering', 'gyro streaming', '60fps native', 'expo channel: live'],
-  ai: ['model: online', '> ask me anything', 'context: forge.os', 'streaming tokens…', 'grounded answers'],
-}
-
-function ProgFeed({ id }: { id: SkillId }) {
-  const pool = FEED[id]
-  const [n, setN] = useState(() => (Math.random() * pool.length) | 0)
-  useEffect(() => {
-    const t = setInterval(() => setN(v => v + 1), 1400 + Math.random() * 700)
-    return () => clearInterval(t)
-  }, [])
-  return (
-    <span className="prog-feed" aria-hidden>
-      <span className="pf-line pf-dim">▸ {pool[n % pool.length]}</span>
-      <span className="pf-line">▸ {pool[(n + 1) % pool.length]}</span>
-    </span>
-  )
-}
 
 /** Types text; re-runs whenever `text` changes. */
 function Typed({ text, step = 3, interval = 12, delay = 0 }: { text: string; step?: number; interval?: number; delay?: number }) {
@@ -71,7 +52,10 @@ const MAX_LINES = 40
 const COMPLETIONS = [
   'help', 'ls', 'whoami', 'neofetch', 'contact', 'hire', 'github',
   'cat readme.md', 'history', 'uptime', 'date', 'clear', 'reboot',
+  'start', 'order', 'track', 'orders', 'quote', 'build', 'next', 'prev',
   ...SKILLS.map(s => `run ${s.id}`),
+  ...SKILLS.map(s => `build ${s.id}`),
+  ...SKILLS.map(s => `open ${s.id}`),
   ...SKILLS.map(s => s.file),
 ]
 
@@ -80,11 +64,13 @@ export default function Desktop({ visitor, visible, onLaunch }: Props) {
   const [out, setOut] = useState<OutLine[]>([])
   const [cmd, setCmd] = useState('')
   const [active, setActive] = useState(0)
+  const [view, setView] = useState<View>('showcase')
   const inputRef = useRef<HTMLInputElement>(null)
   const outRef = useRef<HTMLDivElement>(null)
   const cardRefs = useRef<(HTMLButtonElement | null)[]>([])
   const cmdLog = useRef<string[]>([])
   const logIdx = useRef(-1)
+  const timers = useRef<ReturnType<typeof setTimeout>[]>([])
   const bootAt = useRef(Date.now())
   const [everShown, setEverShown] = useState(false)
   const welcomed = useRef(false)
@@ -151,10 +137,22 @@ export default function Desktop({ visitor, visible, onLaunch }: Props) {
     return () => clearTimeout(timer)
   }, [])
 
+  useEffect(() => () => timers.current.forEach(clearTimeout), [])
+
   const print = (lines: string | string[], cls?: string) => {
     const add = (Array.isArray(lines) ? lines : [lines]).map(text => ({ text, cls }))
     setOut(prev => [...prev, ...add].slice(-MAX_LINES))
   }
+
+  // stream lines into the console over time — the terminal doing real work
+  const stream = (rows: [string, string?][], gap = 200) => {
+    rows.forEach(([text, cls], i) => {
+      timers.current.push(setTimeout(() => print(text, cls), i * gap))
+    })
+  }
+
+  const skillFrom = (rest: string) =>
+    SKILLS.find(s => s.id === rest || s.file.split('.')[0] === rest || s.file === rest)
 
   const run = (raw: string) => {
     const c = raw.trim().toLowerCase()
@@ -172,10 +170,51 @@ export default function Desktop({ visitor, visible, onLaunch }: Props) {
       onLaunch(prog.id, null)
       return
     }
+
+    // ---- the lead machine: start a project brief ----
+    if (['start', 'new', 'brief', 'project', 'start a project', 'quote', 'estimate', 'order'].includes(c)) {
+      print('▸ opening the order configurator …')
+      setView('order')
+      return
+    }
+    if (['track', 'orders', 'status'].includes(c)) {
+      print('▸ opening your dashboard …')
+      setView('track')
+      return
+    }
+
+    // ---- carousel control from the terminal ----
+    if (c === 'next') { setActive(a => (a + 1) % SKILLS.length); print('▸ next program'); return }
+    if (c === 'prev') { setActive(a => (a - 1 + SKILLS.length) % SKILLS.length); print('▸ previous program'); return }
+    if (c.startsWith('open ') || c.startsWith('focus ')) {
+      const s = skillFrom(c.split(' ')[1] ?? '')
+      if (s) { setActive(SKILLS.indexOf(s)); print(`▸ focused ${s.file}`) }
+      else print(`no such program — try: ${SKILLS.map(x => x.id).join(' · ')}`)
+      return
+    }
+    // ---- build: the terminal does real work, live ----
+    if (c === 'build' || c.startsWith('build ')) {
+      const s = skillFrom(c.split(' ')[1] ?? '') ?? SKILLS[active]
+      setActive(SKILLS.indexOf(s))
+      stream([
+        [`$ forge build ${s.file}`, 'sh-echo'],
+        ['▸ resolving deps ............... ok'],
+        ['▸ type-checking ................ 0 errors'],
+        ['▸ compiling modules ........... ok'],
+        ['▸ bundling · tree-shaking ..... ok'],
+        [`✓ built ${s.file} — 342 modules, 0 errors`, 'sh-block'],
+        [`  run it live:  run ${s.id}`, 'sh-echo'],
+      ], 230)
+      return
+    }
+
     switch (c) {
       case 'help':
         print([
+          '★ order   : configure YOUR project → instant quote → place it (no calls)',
+          '★ track   : watch your order move through the build pipeline',
           'programs : three · frontend · backend · mobile · ai   (run <name> or keys 1–5)',
+          'build    : build [name] · run <name> · next · prev · open <name>',
           'commands : whoami · neofetch · cat readme.md · contact · hire · github · uptime · clear · reboot',
           'pro tip  : ← → flip the carousel · Tab completes · ↑ recalls',
         ])
@@ -246,15 +285,14 @@ export default function Desktop({ visitor, visible, onLaunch }: Props) {
           <span className="bar-mark">FORGE</span>
           <span className="bar-badge">v26.07</span>
         </div>
-        <nav className="bar-nav" aria-hidden>
-          {SKILLS.map((s, i) => (
+        <nav className="bar-nav">
+          {(['showcase', 'order', 'track'] as View[]).map(v => (
             <button
-              key={s.id}
-              className={'bar-tab' + (i === active ? ' on' : '')}
-              style={{ ['--accent' as string]: s.accent }}
-              onClick={() => setActive(i)}
+              key={v}
+              className={'bar-tab' + (view === v ? ' on' : '')}
+              onClick={() => setView(v)}
             >
-              {s.file}
+              {v}
             </button>
           ))}
         </nav>
@@ -266,7 +304,15 @@ export default function Desktop({ visitor, visible, onLaunch }: Props) {
         </div>
       </header>
 
-      <main className="stage">
+      <main className={'stage' + (view === 'showcase' ? '' : ' stage-solo')}>
+        {view === 'order' && (
+          <div className="order-wrap">
+            <BriefBuilder onClose={() => setView('showcase')} onPlaced={() => setView('track')} />
+          </div>
+        )}
+        {view === 'track' && <TrackView onOrder={() => setView('order')} />}
+        {view === 'showcase' && (
+        <>
         {/* left: the coverflow of programs */}
         <section className="deck">
           <p className="deck-kicker">
@@ -306,22 +352,13 @@ export default function Desktop({ visitor, visible, onLaunch }: Props) {
                       <span className="prog-title">{s.file}</span>
                       <span className="prog-key">[{s.hotkey}]</span>
                     </span>
-                    <span className="prog-body">
-                      <span className="prog-head">
-                        <span className="prog-icon">{s.icon}</span>
-                        <span className="prog-label">{s.label}</span>
-                      </span>
-                      <ProgFeed id={s.id} />
-                      <span className="prog-spec" aria-hidden>
-                        <span className="prog-syn">{s.man.synopsis}</span>
-                        <span className="prog-play">
-                          {s.man.play.slice(0, 2).map(p => <span key={p}>▸ {p}</span>)}
-                        </span>
-                      </span>
+                    <span className="prog-demo">
+                      <SkillDemo id={s.id} active={rel === 0} accent={s.accent} />
                     </span>
                     <span className="prog-foot">
-                      <span className="prog-run">{rel === 0 ? '▶ RUN' : 'focus'}</span>
-                      <span className="prog-eq" aria-hidden><i /><i /><i /><i /><i /></span>
+                      <span className="prog-icon">{s.icon}</span>
+                      <span className="prog-label">{s.label}</span>
+                      <span className="prog-run">{rel === 0 ? '▶ open exhibit' : ''}</span>
                     </span>
                   </button>
                 )
@@ -365,9 +402,13 @@ export default function Desktop({ visitor, visible, onLaunch }: Props) {
             )}
           </div>
           <div className="console-chips">
-            {['help', 'neofetch', 'cat readme.md', 'hire', 'github'].map(cc => (
-              <button key={cc} className={'chip' + (cc === 'hire' ? ' chip-hire' : '')} onClick={() => run(cc)}>
-                {cc === 'hire' ? '★ hire' : cc}
+            {['start', 'build', 'neofetch', 'help', 'hire'].map(cc => (
+              <button
+                key={cc}
+                className={'chip' + (cc === 'hire' ? ' chip-hire' : cc === 'start' ? ' chip-go' : '')}
+                onClick={() => run(cc)}
+              >
+                {cc === 'hire' ? '★ hire' : cc === 'start' ? '▸ order a project' : cc}
               </button>
             ))}
           </div>
@@ -387,6 +428,8 @@ export default function Desktop({ visitor, visible, onLaunch }: Props) {
             />
           </div>
         </aside>
+        </>
+        )}
       </main>
     </div>
   )
