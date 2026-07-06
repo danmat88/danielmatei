@@ -1,4 +1,4 @@
-@import '@fontsource-variable/orbitron';
+@import '@fontsource-variable/jetbrains-mono';
 @import '@fontsource-variable/space-grotesk';
 
 *,
@@ -10,30 +10,32 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-/* no default focus ring on tap/click — visible ring only for keyboard nav */
 :focus {
   outline: none;
 }
 :focus-visible {
-  outline: 1px solid rgba(155, 231, 255, 0.55);
-  outline-offset: 4px;
+  outline: 1px solid rgba(61, 255, 158, 0.55);
+  outline-offset: 3px;
 }
 
 :root {
-  --bg: #050508;
-  --text: #e8e6f0;
-  --font-display: 'Orbitron Variable', sans-serif;
-  --font-ui: 'Space Grotesk Variable', system-ui, sans-serif;
+  --bg: #030605;
+  --panel: rgba(6, 13, 11, 0.72);
+  --green: #3dff9e;
+  --green-dim: rgba(61, 255, 158, 0.55);
+  --green-faint: rgba(61, 255, 158, 0.16);
+  --text: #d9ece2;
+  --text-dim: rgba(200, 230, 214, 0.55);
+  --font-mono: 'JetBrains Mono Variable', 'Cascadia Code', Consolas, monospace;
 
   color-scheme: dark;
-  font-family: var(--font-ui);
+  font-family: var(--font-mono);
   color: var(--text);
   background: var(--bg);
   -webkit-font-smoothing: antialiased;
 }
 
-/* The experience is locked to the viewport: the page itself never scrolls.
-   Anything scrollable lives inside its own panel. */
+/* The OS is locked to the viewport: the page itself never scrolls. */
 html,
 body,
 #root {
@@ -53,161 +55,1504 @@ canvas {
   display: block;
 }
 
-/* loader counter: slow breathing glow */
-.warp-num {
-  animation: num-breathe 2.4s ease-in-out infinite;
+/* ---------- wallpaper + CRT overlays (both STATIC, never animated) ---------- */
+
+.wallpaper {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background: radial-gradient(24px 24px at center, rgba(61, 255, 158, 0.055) 1px, transparent 1.5px);
+  background-size: 26px 26px;
 }
-@keyframes num-breathe {
-  0%, 100% {
-    text-shadow: 0 0 16px rgba(120, 190, 255, 0.45);
+
+/* ---------- THE MACHINE ROOM: the background is the OS's own activity ---------- */
+
+.wall {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  gap: 1px;
+  padding: 44px 12px 12px;
+  pointer-events: none;
+  opacity: 0.34;
+  /* clear the centre so the wall reads as peripheral depth, never noise
+     behind the name and cards */
+  -webkit-mask-image: radial-gradient(135% 120% at 50% 46%, transparent 0%, transparent 42%, #000 86%);
+  mask-image: radial-gradient(135% 120% at 50% 46%, transparent 0%, transparent 42%, #000 86%);
+}
+.wall-pane {
+  border: 1px solid rgba(61, 255, 158, 0.05);
+  padding: 12px 14px;
+  overflow: hidden;
+  min-height: 0;
+}
+.wall-pane h3 {
+  font-size: 0.52rem;
+  font-weight: 400;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: rgba(61, 255, 158, 0.16);
+  margin-bottom: 8px;
+}
+.wall-pane pre {
+  font-family: var(--font-mono);
+  font-size: 0.56rem;
+  line-height: 1.95;
+  color: rgba(160, 210, 185, 0.12);
+  white-space: pre;
+}
+.wall-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.wall-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.54rem;
+  color: rgba(160, 210, 185, 0.14);
+}
+.wall-bar-name {
+  width: 42px;
+}
+.wall-bar-track {
+  flex: 1;
+  height: 3px;
+  background: rgba(61, 255, 158, 0.05);
+  overflow: hidden;
+}
+.wall-bar-track i {
+  display: block;
+  height: 100%;
+  background: rgba(61, 255, 158, 0.16);
+  transform-origin: left center;
+  transition: transform 1.6s ease;
+}
+.wall-bar-val {
+  width: 28px;
+  text-align: right;
+}
+.wall-clock .wall-time {
+  font-size: clamp(1.1rem, 2.6vmin, 1.6rem);
+  font-weight: 700;
+  color: rgba(61, 255, 158, 0.14);
+  letter-spacing: 0.1em;
+}
+.wall-clock .wall-date {
+  margin-top: 4px;
+  font-size: 0.56rem;
+  color: rgba(160, 210, 185, 0.12);
+}
+.wall-clock .wall-vis {
+  margin-top: 8px;
+  font-size: 0.56rem;
+  color: rgba(255, 217, 138, 0.16);
+}
+.wall canvas {
+  opacity: 0.3;
+}
+@media (max-width: 860px) {
+  .wall {
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+  }
+}
+
+.crt {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.014) 0 1px, transparent 1px 3px),
+    radial-gradient(115% 100% at 50% 45%, transparent 60%, rgba(0, 0, 0, 0.5) 100%);
+}
+
+/* ---------- LIQUID PHOSPHOR loader ---------- */
+
+.loader {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: #030605;
+  display: grid;
+  place-items: center;
+}
+/* ---------- window seeds: the first living exhibits ---------- */
+
+.seed-three {
+  margin-top: 18px;
+}
+.seed-three-host {
+  display: flex;
+  justify-content: center;
+}
+.seed-note {
+  margin-top: 6px;
+  font-size: 0.6rem;
+  letter-spacing: 0.14em;
+  color: rgba(200, 230, 214, 0.35);
+}
+.seed-btn {
+  margin-top: 16px;
+  background: none;
+  border: 1px solid color-mix(in srgb, var(--accent, #3dff9e) 45%, transparent);
+  border-radius: 999px;
+  padding: 9px 20px;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.2em;
+  color: #eafff4;
+  cursor: pointer;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+.seed-btn:hover:not(:disabled) {
+  border-color: var(--accent, #3dff9e);
+  box-shadow: 0 0 16px color-mix(in srgb, var(--accent, #3dff9e) 35%, transparent);
+}
+.seed-btn:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+.seed-log {
+  margin-top: 14px;
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  line-height: 2;
+  color: color-mix(in srgb, var(--accent, #3dff9e) 75%, white 10%);
+  white-space: pre-wrap;
+}
+.seed-chat {
+  margin-top: 18px;
+  width: min(480px, 82vw);
+  text-align: left;
+}
+.seed-chat-log {
+  font-size: 0.7rem;
+  line-height: 1.9;
+  min-height: 5.7em;
+}
+.seed-chat-log b {
+  font-weight: 700;
+}
+.chat-ai b {
+  color: var(--accent, #ff6d9d);
+}
+.chat-you b {
+  color: var(--green);
+}
+.seed-chat-log p {
+  color: rgba(220, 240, 250, 0.8);
+  margin-top: 4px;
+}
+.seed-chat-line {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+.seed-chat-line input {
+  flex: 1;
+  background: rgba(4, 10, 8, 0.8);
+  border: 1px solid var(--green-faint);
+  border-radius: 5px;
+  padding: 8px 12px;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text);
+  caret-color: var(--green);
+}
+.seed-chat-line .seed-btn {
+  margin-top: 0;
+}
+/* HUD chrome: viewfinder corners + OS header + hexdump murmur */
+.hud-corner {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  border: 1px solid rgba(61, 255, 158, 0.4);
+  z-index: 1;
+  pointer-events: none;
+}
+.hud-corner.tl {
+  top: 16px;
+  left: 16px;
+  border-right: 0;
+  border-bottom: 0;
+}
+.hud-corner.tr {
+  top: 16px;
+  right: 16px;
+  border-left: 0;
+  border-bottom: 0;
+}
+.hud-corner.bl {
+  bottom: 16px;
+  left: 16px;
+  border-right: 0;
+  border-top: 0;
+}
+.hud-corner.br {
+  bottom: 16px;
+  right: 16px;
+  border-left: 0;
+  border-top: 0;
+}
+.loader-head {
+  position: absolute;
+  top: 22px;
+  left: 52px;
+  right: 52px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.6rem;
+  letter-spacing: 0.22em;
+  color: rgba(200, 230, 214, 0.4);
+  z-index: 1;
+  pointer-events: none;
+}
+.loader-head-os {
+  color: var(--green);
+  text-shadow: 0 0 10px rgba(61, 255, 158, 0.4);
+}
+/* the wordmark — also forces Space Grotesk to load before the desktop shows */
+.loader-mark {
+  font-family: 'Space Grotesk Variable', var(--font-mono);
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  color: #eafff4;
+}
+@keyframes node-pulse {
+  0%,
+  100% {
+    opacity: 1;
   }
   50% {
-    text-shadow: 0 0 34px rgba(150, 210, 255, 0.95);
+    opacity: 0.45;
   }
 }
 
-/* loader HUD: slow orbit of the tick ring */
-.hud-spin {
-  animation: hud-spin 14s linear infinite;
+/* ---------- THE COMPILE: the machine builds & boots itself ---------- */
+
+.loader.compile {
+  background: #010301;
+  overflow: hidden;
 }
-@keyframes hud-spin {
-  to {
-    transform: rotate(360deg);
+/* the drifting-code field — dim depth, never competes with the foreground */
+.compile-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  opacity: 0.6;
+}
+/* a static radial that darkens the middle so the terminal & meter read
+   crisp over the code rain — single layer, never animated */
+.loader.compile::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: radial-gradient(105% 80% at 50% 46%, rgba(1, 3, 1, 0.88) 10%, rgba(1, 3, 1, 0.42) 40%, transparent 80%);
+}
+
+.compile-core {
+  position: relative;
+  z-index: 2;
+  width: min(760px, 90vw);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(20px, 4.4dvh, 42px);
+}
+
+/* the stage rail: RESOLVE ▸ COMPILE ▸ BUNDLE ▸ OPTIMIZE ▸ BOOT */
+.compile-rail {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 4px 10px;
+  font-size: clamp(0.5rem, 1.4vmin, 0.62rem);
+  letter-spacing: 0.24em;
+}
+.cstage {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: rgba(200, 230, 214, 0.28);
+  transition: color 0.4s ease;
+}
+.cstage i {
+  width: 6px;
+  height: 6px;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  transition: background 0.4s ease, box-shadow 0.4s ease;
+}
+.cstage:not(:last-child)::after {
+  content: '▸';
+  margin-left: 10px;
+  color: rgba(61, 255, 158, 0.22);
+}
+.cstage.done {
+  color: rgba(61, 255, 158, 0.5);
+}
+.cstage.done i {
+  background: rgba(61, 255, 158, 0.5);
+}
+.cstage.on {
+  color: #eafff4;
+}
+.cstage.on i {
+  background: var(--green);
+  box-shadow: 0 0 12px var(--green), 0 0 4px var(--green);
+}
+/* the stamp: a stage snaps home the instant it completes */
+.cstage.flash {
+  animation: stage-pop 0.6s ease-out;
+}
+@keyframes stage-pop {
+  0% {
+    transform: scale(1);
+  }
+  32% {
+    transform: scale(1.22);
+    color: #eafff4;
+  }
+  100% {
+    transform: scale(1);
   }
 }
 
-/* nebula and halo are static layers: only the pointer parallax moves them
-   (compositor-only) — continuous animation of vmax-sized layers janks weak GPUs */
+/* the segmented meter — the hero */
+.compile-meter {
+  width: 100%;
+  text-align: center;
+}
+.compile-pct {
+  font-size: clamp(3rem, 11vmin, 5.4rem);
+  font-weight: 800;
+  line-height: 1;
+  color: #eafff4;
+  text-shadow: 0 0 40px rgba(61, 255, 158, 0.4);
+  transition: text-shadow 0.4s ease;
+}
+.compile-pct em {
+  font-style: normal;
+  font-size: 0.32em;
+  color: var(--green-dim);
+  margin-left: 6px;
+  letter-spacing: 0.1em;
+}
+.compile-seg {
+  display: flex;
+  gap: 3px;
+  width: 100%;
+  margin-top: clamp(14px, 2.6dvh, 22px);
+}
+.compile-seg i {
+  flex: 1;
+  height: 15px;
+  border-radius: 1px;
+  background: rgba(61, 255, 158, 0.07);
+  box-shadow: inset 0 0 0 1px rgba(61, 255, 158, 0.06);
+  transition: background 0.25s ease, box-shadow 0.25s ease;
+}
+.compile-seg i.on {
+  background: rgba(61, 255, 158, 0.45);
+  box-shadow: inset 0 0 0 1px rgba(61, 255, 158, 0.3);
+}
+.compile-seg i.edge {
+  background: var(--green);
+  box-shadow: 0 0 14px rgba(61, 255, 158, 0.75), inset 0 0 0 1px rgba(160, 255, 210, 0.8);
+}
+/* the compile head stands proud and burns brightest as it marches */
+.compile-seg i.lead {
+  background: #eafff4;
+  transform: scaleY(1.32);
+  box-shadow: 0 0 18px rgba(160, 255, 210, 0.95), 0 0 6px var(--green);
+}
+.compile-sub {
+  margin-top: 14px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  font-size: clamp(0.56rem, 1.5vmin, 0.66rem);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.compile-spin {
+  color: var(--green);
+}
+.compile-eta {
+  color: #ffcf7a;
+  letter-spacing: 0.14em;
+}
 
-/* planets swell slightly when you aim at them */
-.planet-sphere {
-  transition: transform 0.35s ease;
+/* top hairline: a fast phosphor progress sweep across the very top edge */
+.compile-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  z-index: 3;
+  background: rgba(61, 255, 158, 0.06);
 }
-button:hover > .planet-float > .planet-sphere {
-  transform: scale(1.09);
+.compile-top span {
+  display: block;
+  height: 100%;
+  transform: scaleX(0);
+  transform-origin: left center;
+  background: linear-gradient(90deg, rgba(61, 255, 158, 0.5), var(--green));
+  box-shadow: 0 0 12px rgba(61, 255, 158, 0.7);
 }
 
-/* a small moon on a slow orbit */
-.moon-orbit {
-  animation: moon-orbit 14s linear infinite;
+/* the compiler viewport: real code streaming through */
+.compile-term {
+  position: relative;
+  width: 100%;
+  border: 1px solid rgba(61, 255, 158, 0.16);
+  border-radius: 7px;
+  background: rgba(3, 8, 6, 0.72);
+  box-shadow: 0 24px 70px -30px rgba(0, 0, 0, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  overflow: hidden;
 }
-@keyframes moon-orbit {
-  to {
-    transform: rotate(360deg);
+/* live build counters, right-aligned in the titlebar */
+.compile-stat {
+  margin-left: auto;
+  font-size: 0.56rem;
+  letter-spacing: 0.08em;
+  color: rgba(61, 255, 158, 0.55);
+  white-space: nowrap;
+}
+/* a slow scanline gliding down the code — the terminal breathing (CRT) */
+.compile-scan {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 34px;
+  height: 44px;
+  z-index: 2;
+  pointer-events: none;
+  background: linear-gradient(180deg, transparent, rgba(61, 255, 158, 0.06) 50%, transparent);
+  transform: translateY(-44px);
+  animation: compile-scan 3.4s linear infinite;
+}
+@keyframes compile-scan {
+  0% {
+    transform: translateY(-44px);
+  }
+  100% {
+    transform: translateY(260px);
+  }
+}
+.compile-term-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(61, 255, 158, 0.1);
+  background: rgba(4, 9, 7, 0.7);
+}
+.compile-dots {
+  display: flex;
+  gap: 6px;
+}
+.compile-dots i {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: rgba(200, 230, 214, 0.14);
+}
+.compile-dots i:first-child {
+  background: rgba(61, 255, 158, 0.7);
+}
+.compile-term-title {
+  font-size: 0.58rem;
+  letter-spacing: 0.14em;
+  color: var(--text-dim);
+}
+.compile-code {
+  height: clamp(150px, 27dvh, 236px);
+  overflow: hidden;
+  padding: 12px 16px;
+  font-family: var(--font-mono);
+  font-size: clamp(0.58rem, 1.5vmin, 0.72rem);
+  line-height: 1.7;
+  text-align: left;
+  white-space: pre;
+  /* the top of the stream dissolves — a static mask, not an animation */
+  mask-image: linear-gradient(180deg, transparent, #000 26%, #000 100%);
+  -webkit-mask-image: linear-gradient(180deg, transparent, #000 26%, #000 100%);
+}
+.compile-code .cl {
+  white-space: pre;
+}
+/* the newest line glows faintly — the eye tracks the compile head */
+.compile-code .cl:last-child {
+  background: linear-gradient(90deg, rgba(61, 255, 158, 0.09), transparent 70%);
+}
+.tk-c {
+  color: rgba(120, 155, 138, 0.5);
+  font-style: italic;
+}
+.tk-s {
+  color: #ffcf7a;
+}
+.tk-k {
+  color: #5cc8ff;
+}
+.tk-n {
+  color: #ffb066;
+}
+.tk-y {
+  color: #35e0b2;
+}
+.tk-f {
+  color: #eafff4;
+}
+.tk-i {
+  color: rgba(200, 235, 214, 0.82);
+}
+.tk-p {
+  color: rgba(140, 180, 160, 0.62);
+}
+.tk-ok {
+  color: var(--green);
+  font-weight: 700;
+}
+.cur {
+  color: var(--green);
+  animation: blink 1.05s steps(1) infinite;
+}
+
+/* exit 0: the meter locks to full and flares */
+.compile-done .compile-pct {
+  text-shadow: 0 0 60px rgba(61, 255, 158, 0.7);
+}
+.compile-done .compile-seg i {
+  background: rgba(61, 255, 158, 0.55);
+  box-shadow: 0 0 10px rgba(61, 255, 158, 0.4), inset 0 0 0 1px rgba(160, 255, 210, 0.5);
+}
+
+/* it's alive: a single green power-on bloom + the console settling */
+.compile-flash {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(circle at 50% 42%, rgba(61, 255, 158, 0.4), transparent 55%);
+}
+.compile-done .compile-flash {
+  animation: boot-bloom 0.9s ease-out;
+}
+@keyframes boot-bloom {
+  0% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  22% {
+    opacity: 0.85;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.15);
+  }
+}
+.compile-done .compile-core {
+  animation: core-settle 0.6s ease-out;
+}
+@keyframes core-settle {
+  0% {
+    transform: scale(1);
+  }
+  30% {
+    transform: scale(1.025);
+  }
+  100% {
+    transform: scale(1);
   }
 }
 
-/* celestial bodies bob gently in place */
-.planet-float {
-  animation: planet-float 9s ease-in-out infinite alternate;
-}
-@keyframes planet-float {
-  from {
-    transform: translateY(-6px);
+@media (max-width: 640px) {
+  .compile-core {
+    width: 92vw;
+    gap: clamp(16px, 3dvh, 28px);
   }
-  to {
-    transform: translateY(8px);
+  .compile-rail {
+    letter-spacing: 0.16em;
+    gap: 3px 7px;
+  }
+  .cstage:not(:last-child)::after {
+    margin-left: 7px;
+  }
+  .compile-seg i {
+    height: 12px;
+  }
+  /* keep the titlebar one line so the scanline stays aligned */
+  .compile-stat {
+    display: none;
+  }
+  .compile-term-title {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 }
 
-/* docked panels scroll inside themselves with a hairline scrollbar;
-   stable gutter so the bar can never shift the layout when it appears */
-.panel-scroll {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(155, 231, 255, 0.25) transparent;
-  scrollbar-gutter: stable;
-  overscroll-behavior: contain;
+.cursor {
+  color: var(--green);
+  animation: blink 1.05s steps(1) infinite;
 }
-.panel-scroll::-webkit-scrollbar {
-  width: 4px;
+@keyframes blink {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
 }
-.panel-scroll::-webkit-scrollbar-thumb {
-  background: rgba(155, 231, 255, 0.25);
+
+/* ---------- FORGE desktop ---------- */
+
+.forge {
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  pointer-events: none;
+}
+.forge.on {
+  pointer-events: auto;
+}
+/* assemble: the bar drops, the stage rises (compositor-only) */
+.forge .bar {
+  transform: translateY(-100%);
+  opacity: 0;
+  transition: transform 0.5s ease 0.05s, opacity 0.5s ease 0.05s;
+}
+.forge.on .bar {
+  transform: none;
+  opacity: 1;
+}
+.forge .stage {
+  opacity: 0;
+  transform: translateY(14px);
+  transition: transform 0.55s ease 0.22s, opacity 0.55s ease 0.22s;
+}
+.forge.on .stage {
+  opacity: 1;
+  transform: none;
+}
+.forge:not(.on) .bar,
+.forge:not(.on) .stage {
+  transition-delay: 0s;
+  transition-duration: 0.25s;
+}
+
+/* ---------- the header menubar ---------- */
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  height: 46px;
+  padding: 0 max(2.2vw, 14px);
+  border-bottom: 1px solid var(--green-faint);
+  background: rgba(4, 9, 7, 0.72);
+}
+.bar-left {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+.bar-mark {
+  font-family: 'Space Grotesk Variable', var(--font-mono);
+  font-weight: 700;
+  font-size: 1.16rem;
+  letter-spacing: 0.36em;
+  text-indent: 0.36em;
+  color: #eafff4;
+  text-shadow: 0 0 24px rgba(61, 255, 158, 0.4);
+}
+.bar-badge {
+  font-size: 0.5rem;
+  letter-spacing: 0.16em;
+  color: var(--green);
+  border: 1px solid var(--green-faint);
   border-radius: 4px;
+  padding: 2px 6px;
+  opacity: 0.75;
 }
-.panel-scroll::-webkit-scrollbar-track {
+.bar-nav {
+  display: flex;
+  gap: 3px;
+  margin: 0 auto;
+}
+.bar-tab {
+  background: none;
+  border: 0;
+  border-radius: 6px;
+  padding: 6px 11px;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+}
+.bar-tab:hover {
+  color: var(--text);
+}
+.bar-tab.on {
+  color: #eafff4;
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 42%, transparent);
+}
+.bar-right {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  font-size: 0.6rem;
+  letter-spacing: 0.07em;
+  color: var(--text-dim);
+}
+.bar-mail {
+  color: var(--text-dim);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+.bar-mail:hover {
+  color: var(--green);
+}
+.bar-visitor {
+  color: #ffd98a;
+}
+.bar-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.bar-live i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 8px var(--green);
+  animation: livepulse 2.6s ease-in-out infinite;
+}
+@keyframes livepulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+.bar-clock {
+  color: var(--text);
+}
+
+/* ---------- the two-column stage ---------- */
+.stage {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1.32fr) minmax(322px, 0.86fr);
+  gap: clamp(14px, 2vw, 30px);
+  padding: clamp(14px, 2.6dvh, 32px) max(2.2vw, 14px) clamp(14px, 2.4dvh, 26px);
+}
+
+/* ---------- LEFT: the coverflow deck ---------- */
+.deck {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: clamp(10px, 2dvh, 22px);
+}
+.deck-kicker {
+  text-align: center;
+  font-size: clamp(0.6rem, 1.5vmin, 0.74rem);
+  letter-spacing: 0.05em;
+  color: var(--text-dim);
+}
+.deck-count {
+  color: rgba(200, 230, 214, 0.4);
+}
+.prompt-user {
+  color: var(--green);
+}
+.prompt-path {
+  color: var(--text-dim);
+}
+
+.cf {
+  display: flex;
+  align-items: center;
+}
+.cf-stage {
+  position: relative;
+  flex: 1;
+  height: clamp(258px, 46dvh, 400px);
+  perspective: 1600px;
+  --spread: clamp(150px, 18vw, 272px);
+}
+.cf-card {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: clamp(236px, 25vw, 320px);
+  height: clamp(212px, 40dvh, 300px);
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(180deg, rgba(9, 17, 14, 0.95), rgba(4, 9, 7, 0.92));
+  border: 1px solid var(--green-faint);
+  border-radius: 10px;
+  overflow: hidden;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  text-align: left;
+  transform-style: preserve-3d;
+  transform: translate(-50%, -50%) translateX(calc(var(--rel) * var(--spread)))
+    translateZ(calc(var(--abs) * -150px)) rotateY(calc(var(--rel) * -27deg))
+    scale(max(0.68, calc(1 - var(--abs) * 0.12)));
+  transition: transform 0.55s cubic-bezier(0.33, 0.9, 0.28, 1), opacity 0.5s ease,
+    border-color 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: 0 20px 50px -24px rgba(0, 0, 0, 0.9);
+}
+.cf-card.is-active {
+  border-color: color-mix(in srgb, var(--accent) 62%, transparent);
+  box-shadow: 0 28px 72px -20px color-mix(in srgb, var(--accent) 48%, transparent);
+}
+.cf-arrow {
+  flex-shrink: 0;
+  z-index: 60;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  background: rgba(4, 10, 8, 0.72);
+  border: 1px solid var(--green-faint);
+  border-radius: 50%;
+  color: var(--text);
+  font-size: 1.35rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+.cf-arrow:hover {
+  color: var(--green);
+  border-color: var(--green);
+  background: rgba(6, 16, 12, 0.9);
+}
+.cf-prev {
+  margin-right: -20px;
+}
+.cf-next {
+  margin-left: -20px;
+}
+.cf-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+.cf-dots {
+  display: flex;
+  gap: 8px;
+}
+.cf-dot {
+  width: 8px;
+  height: 8px;
+  padding: 0;
+  border: 1px solid var(--green-faint);
+  border-radius: 50%;
+  background: none;
+  cursor: pointer;
+  transition: width 0.25s ease, background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+.cf-dot.on {
+  width: 22px;
+  border-radius: 4px;
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--accent) 70%, transparent);
+}
+.cf-syn {
+  min-height: 1.4em;
+  text-align: center;
+  font-size: 0.7rem;
+  color: var(--text-dim);
+}
+.cf-syn::after {
+  content: '▉';
+  margin-left: 3px;
+  color: var(--accent);
+  animation: blink 1.05s steps(1) infinite;
+}
+
+/* titlebar: traffic lights + program name + hotkey */
+.prog-topbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 11px;
+  border-bottom: 1px solid rgba(61, 255, 158, 0.1);
+  background: rgba(4, 9, 7, 0.6);
+}
+.prog-dots {
+  display: flex;
+  gap: 4px;
+}
+.prog-dots i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(200, 230, 214, 0.14);
+}
+.prog-dots i:first-child {
+  background: color-mix(in srgb, var(--accent) 80%, transparent);
+}
+.prog-title {
+  flex: 1;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #eafff4;
+}
+.prog-key {
+  font-size: 0.56rem;
+  color: var(--text-dim);
+}
+
+/* body: the living process feed (swaps to the spec on hover) */
+.prog-body {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  padding: 11px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.prog-head {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.prog-icon {
+  font-size: clamp(1rem, 2.2vmin, 1.3rem);
+  color: var(--accent);
+  text-shadow: 0 0 14px color-mix(in srgb, var(--accent) 60%, transparent);
+}
+.prog-label {
+  font-size: 0.56rem;
+  letter-spacing: 0.2em;
+  color: var(--text-dim);
+}
+.prog-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 0.6rem;
+  line-height: 1.5;
+  color: rgba(190, 235, 212, 0.5);
+}
+.pf-line {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pf-dim {
+  opacity: 0.45;
+}
+.prog-feed .pf-line:last-child {
+  color: color-mix(in srgb, var(--accent) 78%, white 12%);
+}
+/* the spec overlay slides in on hover — idle shows the process, hover the pitch */
+.prog-spec {
+  position: absolute;
+  inset: 0;
+  padding: 11px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  background: linear-gradient(180deg, rgba(6, 12, 10, 0.97), rgba(4, 9, 7, 0.99));
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  pointer-events: none;
+}
+.cf-card.is-active:hover .prog-spec,
+.cf-card.is-active:focus-visible .prog-spec {
+  opacity: 1;
+  transform: none;
+}
+.prog-syn {
+  font-size: 0.66rem;
+  line-height: 1.5;
+  color: var(--text);
+}
+.prog-play {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.6rem;
+  line-height: 1.4;
+  color: var(--text-dim);
+}
+
+/* footer: RUN + a live process meter */
+.prog-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 12px;
+  border-top: 1px solid rgba(61, 255, 158, 0.08);
+}
+.prog-run {
+  font-size: 0.58rem;
+  letter-spacing: 0.18em;
+  color: var(--accent);
+  opacity: 0.5;
+  transition: opacity 0.25s ease;
+}
+.cf-card.is-active .prog-run {
+  opacity: 1;
+}
+.prog-eq {
+  display: flex;
+  gap: 2px;
+  align-items: flex-end;
+  height: 11px;
+  opacity: 0.6;
+}
+.prog-eq i {
+  width: 2px;
+  height: 100%;
+  background: var(--accent);
+  transform-origin: bottom;
+  animation: eq 1.4s ease-in-out infinite;
+}
+.prog-eq i:nth-child(2) {
+  animation-delay: -0.25s;
+}
+.prog-eq i:nth-child(3) {
+  animation-delay: -0.5s;
+}
+.prog-eq i:nth-child(4) {
+  animation-delay: -0.75s;
+}
+.prog-eq i:nth-child(5) {
+  animation-delay: -1s;
+}
+@keyframes eq {
+  0%,
+  100% {
+    transform: scaleY(0.25);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+/* the phosphor cursor ring */
+.cursor-ring {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(61, 255, 158, 0.5);
+  border-radius: 50%;
+  box-shadow: 0 0 14px rgba(61, 255, 158, 0.22), inset 0 0 8px rgba(61, 255, 158, 0.12);
+  pointer-events: none;
+  z-index: 60;
+  will-change: transform;
+}
+@media (pointer: coarse) {
+  .cursor-ring {
+    display: none;
+  }
+}
+
+/* ---------- RIGHT: the terminal you drive ---------- */
+
+.console {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--green-faint);
+  border-radius: 10px;
+  background: rgba(3, 8, 6, 0.66);
+  box-shadow: 0 24px 60px -30px rgba(0, 0, 0, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.02);
+  overflow: hidden;
+}
+.console-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 13px;
+  border-bottom: 1px solid rgba(61, 255, 158, 0.1);
+  background: rgba(4, 9, 7, 0.7);
+}
+.console-dots {
+  display: flex;
+  gap: 6px;
+}
+.console-dots i {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: rgba(200, 230, 214, 0.14);
+}
+.console-dots i:first-child {
+  background: rgba(61, 255, 158, 0.7);
+}
+.console-title {
+  flex: 1;
+  font-size: 0.64rem;
+  letter-spacing: 0.1em;
+  color: var(--text-dim);
+}
+.console-flag {
+  font-size: 0.5rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(61, 255, 158, 0.4);
+}
+.console-out {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 13px 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-family: var(--font-mono);
+  font-size: clamp(0.6rem, 1.4vmin, 0.72rem);
+  line-height: 1.7;
+  color: var(--text-dim);
+}
+.console-idle {
+  color: rgba(200, 230, 214, 0.3);
+}
+.console-row {
+  white-space: pre-wrap;
+}
+.console-row.sh-echo {
+  color: var(--green-dim);
+}
+.console-row.sh-block {
+  color: var(--green);
+}
+.console-row.sh-hire {
+  color: #ffd98a;
+}
+.console-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  padding: 0 14px 10px;
+}
+.chip {
+  background: rgba(4, 10, 8, 0.6);
+  border: 1px solid var(--green-faint);
+  border-radius: 5px;
+  padding: 4px 10px;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+.chip:hover {
+  color: var(--green);
+  border-color: var(--green-dim);
+}
+.chip-hire {
+  color: #ffd98a;
+}
+.chip-hire:hover {
+  color: #ffe7b3;
+  border-color: rgba(255, 217, 138, 0.4);
+}
+.console-line {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin: 0 12px 12px;
+  padding: 10px 12px;
+  background: rgba(4, 10, 8, 0.85);
+  border: 1px solid var(--green-faint);
+  border-radius: 6px;
+  cursor: text;
+}
+.console-input {
+  flex: 1;
+  margin-left: 8px;
+  background: none;
+  border: 0;
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  color: var(--text);
+  caret-color: var(--green);
+}
+.console-input::placeholder {
+  color: rgba(200, 230, 214, 0.25);
+}
+
+/* stack to one column on narrow screens; the stage scrolls inside itself */
+@media (max-width: 900px) {
+  .stage {
+    grid-template-columns: 1fr;
+    grid-auto-rows: min-content;
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+  }
+  .bar-nav {
+    display: none;
+  }
+  .console {
+    min-height: 44dvh;
+  }
+}
+@media (max-width: 640px) {
+  .bar-mail {
+    display: none;
+  }
+  .bar-mark {
+    font-size: 1rem;
+    letter-spacing: 0.28em;
+    text-indent: 0.28em;
+  }
+  .cf-stage {
+    height: clamp(210px, 34dvh, 290px);
+    --spread: clamp(88px, 30vw, 150px);
+  }
+  .cf-card {
+    width: clamp(200px, 70vw, 262px);
+  }
+  .cf-arrow {
+    display: none;
+  }
+}
+
+/* ---------- program windows ---------- */
+
+.win-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  padding: clamp(8px, 2.5dvh, 26px) clamp(8px, 2.5vw, 26px);
+  background: rgba(1, 3, 2, 0.72);
+}
+/* no CSS entrance animation: GSAP morphs the window out of its tile
+   (FLIP) and must be the element's only transformer */
+.win {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: #050b09;
+  border: 1px solid color-mix(in srgb, var(--accent) 38%, transparent);
+  border-radius: 8px;
+  box-shadow: 0 12px 60px -12px color-mix(in srgb, var(--accent) 30%, transparent);
+  overflow: hidden;
+  will-change: transform;
+}
+.win-proc {
+  position: absolute;
+  top: 52px;
+  left: 18px;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  line-height: 1.8;
+  color: var(--text-dim);
+  text-align: left;
+  opacity: 0.8;
+}
+.win-content {
+  opacity: 0;
+  transition: opacity 0.45s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.win-content.ready {
+  opacity: 1;
+}
+.win-bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--green-faint);
+  background: rgba(4, 9, 7, 0.9);
+}
+/* the running program's accent bleeds along the titlebar edge */
+.win-bar::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 40%;
+  bottom: -1px;
+  height: 1px;
+  background: linear-gradient(90deg, var(--accent), transparent);
+  opacity: 0.6;
+}
+.win-dots {
+  display: flex;
+  gap: 6px;
+}
+.win-dots i {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(200, 230, 214, 0.16);
+}
+.win-dots i:first-child {
+  background: color-mix(in srgb, var(--accent) 75%, transparent);
+}
+.win-title {
+  flex: 1;
+  font-size: 0.64rem;
+  letter-spacing: 0.12em;
+  color: var(--text-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.win-close {
+  background: none;
+  border: 0;
+  color: var(--text-dim);
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 2px 8px;
+  transition: color 0.25s ease;
+}
+.win-close:hover {
+  color: #ff8484;
+}
+.win-body {
+  position: relative;
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 26px;
+}
+.win-kicker {
+  font-size: 0.6rem;
+  letter-spacing: 0.34em;
+  text-indent: 0.34em;
+  color: color-mix(in srgb, var(--accent) 80%, white 5%);
+}
+.win-heading {
+  margin-top: 14px;
+  font-size: clamp(1.3rem, 5.5vmin, 2.2rem);
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-indent: 0.18em;
+  color: #eafff4;
+  text-shadow: 0 0 24px color-mix(in srgb, var(--accent) 40%, transparent);
+}
+.win-ascii {
+  margin-top: 22px;
+  font-family: var(--font-mono);
+  font-size: clamp(0.56rem, 1.7vmin, 0.8rem);
+  line-height: 1.7;
+  text-align: left;
+  color: color-mix(in srgb, var(--accent) 78%, white 8%);
+  text-shadow: 0 0 14px color-mix(in srgb, var(--accent) 35%, transparent);
+  max-width: 100%;
+  overflow-x: auto;
+}
+.win-blurb {
+  margin-top: 20px;
+  max-width: 56ch;
+  font-size: 0.86rem;
+  line-height: 1.8;
+  color: var(--text);
+}
+.win-soon {
+  margin-top: 16px;
+  font-size: 0.68rem;
+  color: var(--text-dim);
+}
+.win-hint {
+  margin-top: 26px;
+  font-size: 0.56rem;
+  letter-spacing: 0.3em;
+  text-indent: 0.3em;
+  color: rgba(200, 230, 214, 0.3);
+}
+
+/* ---------- the OS scrollbar: terminal-grade, everywhere ----------
+   square phosphor thumb on a faint track rail, glows under the cursor —
+   a scrollbar a programmer would screenshot */
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(61, 255, 158, 0.4) rgba(61, 255, 158, 0.05);
+}
+*::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+*::-webkit-scrollbar-track {
+  background: rgba(61, 255, 158, 0.04);
+  border-left: 1px solid rgba(61, 255, 158, 0.08);
+}
+*::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(61, 255, 158, 0.55), rgba(61, 255, 158, 0.25));
+  border: 2px solid #030605;
+  border-radius: 0; /* square, like a terminal */
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--green);
+  box-shadow: 0 0 10px rgba(61, 255, 158, 0.6);
+}
+*::-webkit-scrollbar-corner {
   background: transparent;
 }
 
-/* planet labels brighten with their planet */
-.planet-label {
-  color: rgba(207, 234, 255, 0.6);
-  transition: color 0.3s ease, text-shadow 0.3s ease;
-}
-button:hover .planet-label {
-  color: #eaf6ff;
-  text-shadow: 0 0 10px rgba(150, 210, 255, 0.55);
+.panel-scroll {
+  scrollbar-gutter: stable;
+  overscroll-behavior: contain;
 }
 
-/* gentle pulse on the destination hint (opacity = compositor-only) */
-.dest-hint {
-  animation: dest-hint 2.6s ease-in-out infinite;
-}
-@keyframes dest-hint {
-  0%, 100% {
-    opacity: 0.45;
-  }
-  50% {
-    opacity: 0.95;
-  }
-}
+/* ---------- small heights: compress the deck to fit the viewport ---------- */
 
-/* the traveler sky fades in softly; your own star breathes */
-.traveler-sky {
-  animation: sky-in 1.6s ease-out;
-}
-@keyframes sky-in {
-  from {
-    opacity: 0;
+@media (max-height: 560px) {
+  .cf-stage {
+    height: clamp(150px, 42dvh, 220px);
   }
-  to {
-    opacity: 1;
+  .cf-card {
+    height: clamp(140px, 40dvh, 200px);
   }
-}
-.my-star {
-  animation: my-star 3s ease-in-out infinite;
-}
-
-/* the Observatory pointing at your star */
-.spot-ring {
-  animation: spot-ring 1.3s ease-out 3;
-}
-@keyframes spot-ring {
-  from {
-    transform: scale(0.3);
-    opacity: 1;
-  }
-  to {
-    transform: scale(3.2);
-    opacity: 0;
-  }
-}
-@keyframes my-star {
-  0%, 100% {
-    transform: scale(1);
-    opacity: 0.8;
-  }
-  50% {
-    transform: scale(1.5);
-    opacity: 1;
-  }
-}
-
-/* nav links ignite on hover */
-.navlink {
-  color: rgba(207, 234, 255, 0.65);
-  transition: color 0.3s ease, text-shadow 0.3s ease;
-}
-.navlink:hover {
-  color: #eaf6ff;
-  text-shadow: 0 0 12px rgba(150, 210, 255, 0.6);
-}
-
-@keyframes neb-drift {
-  from {
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-  to {
-    transform: translate3d(7vmax, -5vmax, 0) scale(1.18);
+  .stage {
+    padding-top: clamp(8px, 1.6dvh, 16px);
+    padding-bottom: clamp(8px, 1.6dvh, 16px);
   }
 }

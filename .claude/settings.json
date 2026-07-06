@@ -2,7 +2,32 @@
   "permissions": {
     "allow": [
       "Bash(git -C \"c:/Users/coste/OneDrive/Desktop/danielmatei\" log --oneline -5)",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Bash(npm i *)",
+      "Bash(NODE_PATH=\"c:/Users/coste/OneDrive/Desktop/danielmatei/node_modules\" node allshots.mjs)",
+      "Bash(node allshots.mjs)",
+      "Bash(node -e \"const p=require\\('./package.json'\\); console.log\\(JSON.stringify\\({...p.dependencies, ...p.devDependencies}, null, 1\\)\\)\")",
+      "Bash(node -e ' *)",
+      "Bash(rm -f \"C:/Users/coste/.claude/projects/c--Users-coste-OneDrive-Desktop-danielmatei/memory/\"*.md && printf '' > \"C:/Users/coste/.claude/projects/c--Users-coste-OneDrive-Desktop-danielmatei/memory/MEMORY.md\" && ls -la \"C:/Users/coste/.claude/projects/c--Users-coste-OneDrive-Desktop-danielmatei/memory/\")",
+      "Bash(node probe.mjs)",
+      "Bash(node probe2.mjs)",
+      "Bash(node probe3.mjs)",
+      "Bash(ls -la \"C:/Users/coste/.claude/projects/c--Users-coste-OneDrive-Desktop-danielmatei/\" \"C:/Users/coste/.claude/projects/c--Users-coste-OneDrive-Desktop-mobile-app/\" 2>/dev/null)",
+      "Read(//c/Users/coste/.claude/projects/c--Users-coste-OneDrive-Desktop-mobile-app/**)",
+      "Bash(rm -rf \"C:/Users/coste/.claude/projects/c--Users-coste-OneDrive-Desktop-danielmatei/\"*.jsonl \"C:/Users/coste/.claude/projects/c--Users-coste-OneDrive-Desktop-danielmatei/memory/\"* \"C:/Users/coste/.claude/projects/c--Users-coste-OneDrive-Desktop-mobile-app/\"*.jsonl \"C:/Users/coste/.claude/projects/c--Users-coste-OneDrive-Desktop-mobile-app/\"d11d83fe-13f6-4955-b4c3-b83c73eb0e83 \"C:/Users/coste/.claude/projects/c--Users-coste-OneDrive-Desktop-mobile-app/\"d76582c0-1917-459b-b6fb-34ab9e17bad6 \"C:/Users/coste/.claude/projects/c--Users-coste-OneDrive-Desktop-mobile-app/memory\")",
+      "Read(//c/Users/coste/.claude/projects/c--Users-coste-OneDrive-Desktop-danielmatei/**)",
+      "Bash(ls scratchpad *)",
+      "Bash(ls *.mjs)",
+      "Bash(ls node_modules/playwright-core)",
+      "Bash(ls \"C:\\\\Program Files\\\\Google\\\\Chrome\\\\Application\\\\chrome.exe\")",
+      "Bash(node scratchpad_shots.mjs)",
+      "Bash(node scratchpad_loader.mjs)",
+      "Bash(ls node_modules/@fontsource-variable/)",
+      "Bash(ls \"C:\\\\Users\\\\coste\\\\.claude\\\\projects\\\\c--Users-coste-OneDrive-Desktop-danielmatei\\\\memory\")",
+      "Bash(cat \"C:\\\\Users\\\\coste\\\\.claude\\\\projects\\\\c--Users-coste-OneDrive-Desktop-danielmatei\\\\memory\\\\MEMORY.md\")"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\coste\\.claude\\projects\\c--Users-coste-OneDrive-Desktop-danielmatei\\memory"
     ]
   }
 }

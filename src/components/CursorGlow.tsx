@@ -1,47 +1,43 @@
 import { useEffect, useRef } from 'react'
-import gsap from 'gsap'
 
 /**
- * A point of light as the cursor, with a lagging ring — desktop only.
- * Transform-driven via quickTo; never repaints anything.
+ * A phosphor ring gliding after the pointer, blooming over anything
+ * clickable. Native cursor stays (nothing ever feels broken) — this is
+ * the light that follows it. Compositor-only transforms, mouse-only.
  */
 export default function CursorGlow() {
-  const dotRef = useRef<HTMLDivElement>(null)
-  const ringRef = useRef<HTMLDivElement>(null)
+  const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (!window.matchMedia('(pointer: fine)').matches) return
-    const dot = dotRef.current, ring = ringRef.current
-    if (!dot || !ring) return
-    dot.style.display = 'block'
-    ring.style.display = 'block'
-    const dx = gsap.quickTo(dot, 'x', { duration: 0.12, ease: 'power3.out' })
-    const dy = gsap.quickTo(dot, 'y', { duration: 0.12, ease: 'power3.out' })
-    const rx = gsap.quickTo(ring, 'x', { duration: 0.45, ease: 'power3.out' })
-    const ry = gsap.quickTo(ring, 'y', { duration: 0.45, ease: 'power3.out' })
-    const onMove = (e: PointerEvent) => {
-      dx(e.clientX); dy(e.clientY)
-      rx(e.clientX); ry(e.clientY)
+    const el = ref.current!
+    let tx = -100
+    let ty = -100
+    let x = tx
+    let y = ty
+    let scale = 1
+    let tScale = 1
+    let raf = 0
+    const move = (e: PointerEvent) => {
+      tx = e.clientX
+      ty = e.clientY
+      const t = e.target as Element | null
+      tScale = t?.closest?.('button, a, input, .tile') ? 1.75 : 1
     }
-    window.addEventListener('pointermove', onMove)
-    return () => window.removeEventListener('pointermove', onMove)
+    const tick = () => {
+      x += (tx - x) * 0.16
+      y += (ty - y) * 0.16
+      scale += (tScale - scale) * 0.2
+      el.style.transform = `translate3d(${x - 17}px, ${y - 17}px, 0) scale(${scale})`
+      raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    window.addEventListener('pointermove', move)
+    return () => {
+      cancelAnimationFrame(raf)
+      window.removeEventListener('pointermove', move)
+    }
   }, [])
 
-  return (
-    <>
-      <div ref={ringRef} aria-hidden style={{
-        display: 'none',
-        position: 'fixed', left: -17, top: -17, width: 34, height: 34,
-        borderRadius: '50%', border: '1px solid rgba(150,210,255,0.35)',
-        zIndex: 30, pointerEvents: 'none',
-      }} />
-      <div ref={dotRef} aria-hidden style={{
-        display: 'none',
-        position: 'fixed', left: -3, top: -3, width: 6, height: 6,
-        borderRadius: '50%', background: '#cfeaff',
-        boxShadow: '0 0 10px rgba(150,210,255,0.9)',
-        zIndex: 30, pointerEvents: 'none',
-      }} />
-    </>
-  )
+  return <div ref={ref} className="cursor-ring" aria-hidden />
 }
