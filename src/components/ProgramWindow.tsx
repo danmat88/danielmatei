@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import gsap from 'gsap'
 import type { Skill } from '../skills'
-import ThreeSeed from './seeds/ThreeSeed'
+import SolarSystem from './seeds/SolarSystem'
 import PingSeed from './seeds/PingSeed'
 import ChatSeed from './seeds/ChatSeed'
 import FrontendSeed from './seeds/FrontendSeed'
@@ -137,8 +137,8 @@ export default function ProgramWindow({ skill, fromRect, onExit }: Props) {
             </aside>
 
             {/* right: the live exhibit */}
-            <div className="win-stage">
-              {ready && skill.id === 'three' && <ThreeSeed accent={skill.accent} />}
+            <div className={'win-stage' + (skill.id === 'three' ? ' win-stage-full' : '')}>
+              {ready && skill.id === 'three' && <SolarSystem />}
               {skill.id === 'backend' && <PingSeed />}
               {skill.id === 'frontend' && <FrontendSeed />}
               {skill.id === 'ai' && <ChatSeed />}

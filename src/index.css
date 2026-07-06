@@ -2061,6 +2061,146 @@ canvas {
   align-items: center;
   gap: 14px;
 }
+
+/* three.exe fills its stage edge-to-edge for the solar system */
+.win-stage-full {
+  padding: 0;
+  overflow: hidden;
+}
+.solar {
+  position: absolute;
+  inset: 0;
+}
+.solar canvas {
+  display: block;
+  touch-action: none;
+}
+.solar-label {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.12em;
+  color: #eafff4;
+  white-space: nowrap;
+  text-shadow: 0 0 8px rgba(0, 0, 0, 0.9);
+  pointer-events: none;
+}
+/* time-warp throttle */
+.solar-hud {
+  position: absolute;
+  left: 50%;
+  bottom: 16px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 14px;
+  border: 1px solid var(--green-faint);
+  border-radius: 999px;
+  background: rgba(3, 8, 6, 0.92);
+}
+.solar-play {
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--green-dim);
+  border-radius: 50%;
+  background: rgba(61, 255, 158, 0.1);
+  color: var(--green);
+  font-size: 0.62rem;
+  cursor: pointer;
+}
+.solar-play:hover {
+  background: rgba(61, 255, 158, 0.2);
+}
+.solar-range {
+  width: clamp(120px, 20vw, 220px);
+  accent-color: #4fc3ff;
+  cursor: pointer;
+}
+.solar-warp-read {
+  font-family: var(--font-mono);
+  font-size: 0.64rem;
+  color: #eafff4;
+  white-space: nowrap;
+}
+.solar-warp-read em {
+  font-style: normal;
+  color: var(--text-dim);
+  font-size: 0.9em;
+}
+.solar-hint {
+  position: absolute;
+  left: 50%;
+  bottom: 60px;
+  transform: translateX(-50%);
+  font-family: var(--font-mono);
+  font-size: 0.56rem;
+  letter-spacing: 0.08em;
+  color: rgba(200, 230, 214, 0.4);
+  white-space: nowrap;
+  pointer-events: none;
+}
+.solar-info {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 210px;
+  padding: 14px 16px;
+  border: 1px solid color-mix(in srgb, var(--pc) 50%, transparent);
+  border-radius: 10px;
+  background: rgba(3, 8, 6, 0.94);
+}
+.solar-info-x {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  background: none;
+  border: 0;
+  color: var(--text-dim);
+  font-size: 0.7rem;
+  cursor: pointer;
+}
+.solar-info-x:hover {
+  color: #ff8484;
+}
+.solar-info-name {
+  font-family: 'Space Grotesk Variable', var(--font-mono);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--pc);
+  text-shadow: 0 0 16px color-mix(in srgb, var(--pc) 45%, transparent);
+  margin-bottom: 10px;
+}
+.solar-info dl {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.solar-info dl > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 0.7rem;
+}
+.solar-info dt {
+  color: var(--text-dim);
+  letter-spacing: 0.06em;
+}
+.solar-info dd {
+  color: #eafff4;
+}
+@media (max-width: 640px) {
+  .solar-hint {
+    font-size: 0.5rem;
+    white-space: normal;
+    text-align: center;
+    width: 90%;
+  }
+  .solar-info {
+    width: 170px;
+  }
+}
 .win-ascii {
   font-family: var(--font-mono);
   font-size: clamp(0.58rem, 1.6vmin, 0.82rem);
