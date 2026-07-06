@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git -C \"c:/Users/coste/OneDrive/Desktop/danielmatei\" log --oneline -5)"
+      "Bash(git -C \"c:/Users/coste/OneDrive/Desktop/danielmatei\" log --oneline -5)",
+      "Bash(npm run *)"
     ]
   }
 }

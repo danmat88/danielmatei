@@ -5,6 +5,7 @@ import Nebula from './Nebula'
 import Starfield from './Starfield'
 import StarDust from './StarDust'
 import UniverseMap from './UniverseMap'
+import Guide from './Guide'
 import TravelerSky from './TravelerSky'
 import CursorGlow from './CursorGlow'
 import Logo from './Logo'
@@ -59,6 +60,15 @@ export default function Stage() {
   const heroParRef = useRef<HTMLDivElement>(null)
   const clockRef = useRef<HTMLSpanElement>(null)
   const [sky, setSky] = useState<SkyState | null>(null)
+  const [guide, setGuide] = useState(false)
+
+  // the hero recedes while the guide holds the floor
+  useEffect(() => {
+    const hero = document.querySelector<HTMLElement>('[data-hero]')
+    if (!hero) return
+    hero.style.pointerEvents = guide ? 'none' : ''
+    gsap.to(hero, { opacity: guide ? 0.1 : 1, duration: 0.7, ease: 'power2.inOut' })
+  }, [guide])
 
   // the Living Sky: this visit ignites a permanent star.
   // Testing aid: ?sky=500 previews the sky at any population without
@@ -213,7 +223,9 @@ export default function Stage() {
     const float = gsap.to(heroBlockRef.current, {
       y: 6, duration: 3.5, yoyo: true, repeat: -1, ease: 'sine.inOut', delay: 1.4,
     })
-    return () => { tl.kill(); float.kill() }
+    // first-time travelers are welcomed by the guide
+    const summon = RETURNING ? null : gsap.delayedCall(1.9, () => setGuide(true))
+    return () => { tl.kill(); float.kill(); summon?.kill() }
   }, [phase])
 
   return (
@@ -309,6 +321,7 @@ export default function Stage() {
             data-hero layer — the hero fades when departing, the planets and
             the planet surface must not */}
         {phase === 'main' && <UniverseMap scene={scene} sky={sky} />}
+        {guide && <Guide onDone={() => setGuide(false)} />}
 
         <CursorGlow />
 

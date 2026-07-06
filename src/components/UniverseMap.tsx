@@ -95,7 +95,40 @@ export default function UniverseMap({ scene, sky }: { scene: SceneState; sky: Sk
   const btnRefs = useRef<(HTMLButtonElement | null)[]>([])
   const surfaceRef = useRef<HTMLDivElement>(null)
   const busyRef = useRef(false)
+  const guideRef = useRef(false)
   const belt = useRef({ r: FRONT }) // planet 0 starts in front
+
+  // the guide can hold the floor (blocks belt input) and send us traveling
+  useEffect(() => {
+    const onGuide = (e: Event) => {
+      guideRef.current = Boolean((e as CustomEvent).detail)
+      // the worlds hold their breath while the guide speaks
+      gsap.to(btnRefs.current.filter(Boolean), {
+        opacity: guideRef.current ? 0.18 : 1,
+        duration: 0.7, ease: 'power2.inOut', overwrite: 'auto',
+      })
+    }
+    const onTravel = (e: Event) => {
+      guideRef.current = false // the guide dispatches this as it leaves
+      const id = (e as CustomEvent).detail as Body
+      const idx = PLANETS.findIndex(p => p.id === id)
+      if (idx < 0 || awayRef.current || busyRef.current) return
+      if (idx === focusedIdx()) {
+        planetClickedRef.current(idx)
+      } else {
+        snapTo(idx)
+        gsap.delayedCall(0.9, () => planetClickedRef.current(idx))
+      }
+    }
+    window.addEventListener('guide-state', onGuide)
+    window.addEventListener('travel-to', onTravel)
+    return () => {
+      window.removeEventListener('guide-state', onGuide)
+      window.removeEventListener('travel-to', onTravel)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+  const planetClickedRef = useRef<(idx: number) => void>(() => {})
   const away = open !== null || mode !== null
   const awayRef = useRef(away)
   awayRef.current = away
@@ -156,7 +189,7 @@ export default function UniverseMap({ scene, sky }: { scene: SceneState; sky: Sk
     let moved = 0
     let lastX = 0
     const down = (e: PointerEvent) => {
-      if (awayRef.current || busyRef.current) return
+      if (awayRef.current || busyRef.current || guideRef.current) return
       dragging = true
       moved = 0
       lastX = e.clientX
@@ -257,7 +290,7 @@ export default function UniverseMap({ scene, sky }: { scene: SceneState; sky: Sk
 
   // approach-or-land: distant worlds are brought near first, never teleported
   const planetClicked = (idx: number) => {
-    if (away || busyRef.current || draggedRef.current) return
+    if (away || busyRef.current || draggedRef.current || guideRef.current) return
     const front = focusedIdx()
     if (idx !== front) {
       snapTo(idx)
@@ -267,6 +300,7 @@ export default function UniverseMap({ scene, sky }: { scene: SceneState; sky: Sk
     if (isSurface(id)) depart(idx, () => setOpen(id))
     else depart(idx, () => { setMode(id as ModeBody); busyRef.current = false })
   }
+  planetClickedRef.current = planetClicked
 
   const hopTo = (id: SurfaceBody) => {
     if (!open || id === open || busyRef.current) return
